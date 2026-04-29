@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>𓃥白六世界時鐘 - Sprite Engine Pro</title>
+    <title>𓃥白六世界時鐘 - Sprite Animation Fixed</title>
     <style>
         :root {
             --gba-color: #8b8b8b;
@@ -18,7 +18,6 @@
             align-items: center;
             height: 100vh;
             margin: 0;
-            font-family: 'Courier New', Courier, monospace;
             touch-action: manipulation;
             overflow: hidden;
             -webkit-user-select: none; user-select: none;
@@ -54,15 +53,6 @@
             background: var(--screen-bg);
             position: relative;
         }
-        #scrolling-bg {
-            position: absolute;
-            top: 0;
-            left: -40px;
-            width: 320px;
-            height: 100%;
-            background-image: linear-gradient(90deg, rgba(15, 56, 15, 0.1) 1px, transparent 1px);
-            background-size: 40px 100%;
-        }
         #dog-sprite {
             width: var(--sprite-w);
             height: var(--sprite-h);
@@ -75,13 +65,15 @@
             left: 50%;
             margin-left: calc(var(--sprite-w) / -2); 
             bottom: 30px;
-            transform: scale(0.2); 
+            /* 調整縮放以符合螢幕 */
+            transform: scale(0.18); 
             transform-origin: bottom center;
-            transition: bottom 0.15s ease-out;
+            transition: bottom 0.1s ease-out;
         }
+        /* 控制介面 */
         .controls { width: 100%; display: flex; justify-content: space-between; padding: 0 10px; }
         .d-pad { display: grid; grid-template-columns: 45px 45px 45px; grid-template-rows: 45px 45px 45px; }
-        .btn { background: #333; color: #777; border: none; cursor: pointer; font-size: 18px; display: flex; justify-content: center; align-items: center; }
+        .btn { background: #333; color: #777; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; }
         .btn:active { transform: translateY(2px); background: #111; }
         .up { grid-column: 2; grid-row: 1; border-radius: 5px 5px 0 0; }
         .left { grid-column: 1; grid-row: 2; border-radius: 5px 0 0 5px; }
@@ -97,15 +89,14 @@
     <div style="font-size: 10px; color: #555; margin-bottom: 5px; font-weight: bold;">DOT MATRIX WITH STEREO SOUND</div>
     <div class="screen-bezel">
         <div id="game-screen">
-            <div id="scrolling-bg"></div>
             <div id="dog-sprite"></div>
         </div>
     </div>
     <div class="controls">
         <div class="d-pad">
             <button class="btn up">▲</button>
-            <button class="btn left" ontouchstart="setMove('ArrowLeft', true)" onmousedown="setMove('ArrowLeft', true)">◀</button>
-            <button class="btn right" ontouchstart="setMove('ArrowRight', true)" onmousedown="setMove('ArrowRight', true)">▶</button>
+            <button class="btn left" ontouchstart="handleInput('ArrowLeft', true)" onmousedown="handleInput('ArrowLeft', true)">◀</button>
+            <button class="btn right" ontouchstart="handleInput('ArrowRight', true)" onmousedown="handleInput('ArrowRight', true)">▶</button>
             <button class="btn down">▼</button>
         </div>
         <div class="action-btns">
@@ -117,50 +108,44 @@
 
 <script>
     const dogSprite = document.getElementById('dog-sprite');
-    const scrollingBg = document.getElementById('scrolling-bg');
     
-    // image_8.png 規格
+    // image_8.png 座標對應表
     const frameW = 333; 
     const frameH = 350; 
-    // 行走動作序列：上左(0), 上中(1), 上右(2), 下左(3), 下中(4)
-    const walkSequence = [0, 1, 2, 3, 4];
-    const idleFrame = 5; // 下右圖
+    const walkSequence = [0, 1, 2, 3, 4]; // 行走順序：上左, 上中, 上右, 下左, 下中
+    const idleFrame = 5; // 靜止：下右
 
-    let isMoving = false;
     let walkIndex = 0;
     let animInterval = null;
-    let bgPos = 0;
     let facing = 1;
+    let isMoving = false;
 
-    function updateSprite(frameIdx) {
-        const col = frameIdx % 3;
-        const row = Math.floor(frameIdx / 3);
+    function setFrame(idx) {
+        const col = idx % 3;
+        const row = Math.floor(idx / 3);
         dogSprite.style.backgroundPosition = `-${col * frameW}px -${row * frameH}px`;
     }
 
-    function setMove(dir, pressed) {
+    function handleInput(dir, pressed) {
         if (pressed) {
             isMoving = true;
             facing = (dir === 'ArrowLeft') ? -1 : 1;
-            if (!animInterval) startAnimation();
+            dogSprite.style.transform = `scale(0.18) scaleX(${facing})`;
+            if (!animInterval) {
+                animInterval = setInterval(() => {
+                    walkIndex = (walkIndex + 1) % walkSequence.length;
+                    setFrame(walkSequence[walkIndex]);
+                }, 120);
+            }
         } else {
             isMoving = false;
-            stopAnimation();
+            if (animInterval) {
+                clearInterval(animInterval);
+                animInterval = null;
+            }
+            walkIndex = 0;
+            setFrame(idleFrame);
         }
-    }
-
-    function startAnimation() {
-        animInterval = setInterval(() => {
-            walkIndex = (walkIndex + 1) % walkSequence.length;
-            updateSprite(walkSequence[walkIndex]);
-        }, 110);
-    }
-
-    function stopAnimation() {
-        clearInterval(animInterval);
-        animInterval = null;
-        walkIndex = 0;
-        updateSprite(idleFrame);
     }
 
     function jump() {
@@ -168,20 +153,9 @@
         setTimeout(() => { dogSprite.style.bottom = "30px"; }, 250);
     }
 
-    function loop() {
-        if (isMoving) {
-            bgPos -= (facing * 3);
-            scrollingBg.style.transform = `translateX(${bgPos % 40}px)`;
-            dogSprite.style.transform = `scale(0.2) scaleX(${facing})`;
-        }
-        requestAnimationFrame(loop);
-    }
-
-    const clear = () => setMove('', false);
-    window.addEventListener('mouseup', clear);
-    window.addEventListener('touchend', clear);
-    
-    loop();
+    const release = () => handleInput('', false);
+    window.addEventListener('mouseup', release);
+    window.addEventListener('touchend', release);
 </script>
 </body>
 </html>
