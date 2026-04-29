@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>精靈圖網格校正工具 - image_8.png</title>
+    <title>𓃥白六精靈圖編號修正工具</title>
     <style>
         body {
             background-color: #222;
             color: #fff;
-            font-family: sans-serif;
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -16,12 +16,13 @@
         }
         .container {
             position: relative;
-            /* 根據 333x350 計算出的總寬高 */
+            /* 單幀 333x350，總共 999x700 */
             width: 999px; 
             height: 700px;
             background-image: url('image_8.png');
             background-repeat: no-repeat;
-            border: 2px solid #555;
+            background-size: 999px 700px;
+            border: 3px solid #444;
         }
         .grid-overlay {
             position: absolute;
@@ -34,157 +35,84 @@
             grid-template-rows: repeat(2, 1fr);
         }
         .cell {
-            border: 2px dashed rgba(255, 0, 0, 0.7);
+            border: 2px solid #ff0000;
             box-sizing: border-box;
             position: relative;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
+            background: rgba(0, 0, 0, 0.1);
         }
         .cell::before {
-            content: attr(data-index);
-            font-size: 80px;
-            font-weight: bold;
-            color: rgba(255, 255, 255, 0.8);
-            text-shadow: 4px 4px 0px #000;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 10px 30px;
-            border-radius: 10px;
+            content: attr(data-label);
+            font-size: 100px;
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 5px 5px 0px #ff0000, -2px -2px 0px #000;
+            z-index: 2;
         }
-        .cell-info {
+        .cell-desc {
             position: absolute;
-            bottom: 10px;
-            left: 10px;
-            font-size: 14px;
-            background: rgba(0,0,0,0.7);
-            padding: 5px;
-            color: #0f0;
+            bottom: 15px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #000;
+            padding: 4px 12px;
+            font-weight: bold;
+            border-radius: 20px;
+            font-size: 18px;
         }
-        .legend {
+        .status-idle { background: #ffeb3b; border: 2px solid #f57f17; } /* 靜止亮黃色 */
+        .status-start { background: #4caf50; color: white; border: 2px solid #1b5e20; } /* 起步綠色 */
+
+        .info-panel {
             margin-top: 20px;
             background: #333;
-            padding: 20px;
-            border-radius: 8px;
-            line-height: 1.6;
+            padding: 25px;
+            border-radius: 12px;
+            width: 800px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
-        span.highlight { color: #ff4444; font-weight: bold; }
-        span.coord { color: #00ff00; }
+        .sequence-list {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        .seq-box {
+            background: #444;
+            padding: 10px 20px;
+            border-radius: 5px;
+            border-left: 5px solid #ff0000;
+        }
     </style>
 </head>
 <body>
 
-    <h2>image_8.png 3x2 網格分析儀</h2>
+    <h1>白六精靈圖 (image_8.png) 動作編號驗證</h1>
     
     <div class="container">
         <div class="grid-overlay">
-            <div class="cell" data-index="0"><div class="cell-info">上左 (0,0)</div></div>
-            <div class="cell" data-index="1"><div class="cell-info">上中 (1,0)</div></div>
-            <div class="cell" data-index="2"><div class="cell-info">上右 (2,0)</div></div>
-            <div class="cell" data-index="3"><div class="cell-info">下左 (0,1)</div></div>
-            <div class="cell" data-index="4"><div class="cell-info">下中 (1,1)</div></div>
-            <div class="cell" data-index="5"><div class="cell-info">下右 (2,1)</div></div>
+            <div class="cell" data-label="1"><div class="cell-desc status-start">起步圖</div></div>
+            <div class="cell" data-label="2"><div class="cell-desc">行走 2</div></div>
+            <div class="cell" data-label="3"><div class="cell-desc">行走 3</div></div>
+            <div class="cell" data-label="4"><div class="cell-desc">行走 4</div></div>
+            <div class="cell" data-label="5"><div class="cell-desc">行走 5</div></div>
+            <div class="cell" data-label="6"><div class="cell-desc status-idle">靜止圖</div></div>
         </div>
     </div>
 
-    <div class="legend">
-        <h3>配置參考表：</h3>
-        <ul>
-            <li><span class="highlight">靜止圖：</span> 編號 5 <span class="coord">(下右)</span></li>
-            <li><span class="highlight">起步圖：</span> 編號 0 <span class="coord">(上左)</span></li>
-            <li><span class="highlight">行走序列：</span> 0 → 1 → 2 → 3 → 4</li>
-            <li><strong>單幀尺寸：</strong> 333px × 350px</li>
-        </ul>
-        <p>※ 如果紅框沒有對準狗狗的身體，代表圖片原始尺寸並非 999x700，需調整 CSS 中的 <code>width</code> 與 <code>height</code>。</p>
-    </div>
-
-</body>
-</html>
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>𓃥白六靜止圖測試</title>
-    <style>
-        :root {
-            --gba-color: #8b8b8b;
-            --screen-bg: #9bbc0f; 
-            /* ⚠️ 單幀精確尺寸 */
-            --sprite-w: 333px; 
-            --sprite-h: 350px; 
-        }
-        body {
-            background-color: #1a1a1a;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            -webkit-user-select: none;
-        }
-        .gba-body {
-            width: 320px;
-            height: 560px;
-            background: var(--gba-color);
-            border-radius: 15px 15px 80px 15px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-            position: relative;
-        }
-        .screen-bezel {
-            width: 280px;
-            height: 200px;
-            background: #333;
-            border-radius: 5px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            border: 4px solid #111;
-            overflow: hidden;
-        }
-        #game-screen {
-            width: 240px;
-            height: 160px;
-            background: var(--screen-bg);
-            position: relative;
-        }
-        /* 🔍 靜止圖測試元件 */
-        #dog-sprite {
-            width: var(--sprite-w);
-            height: var(--sprite-h);
-            background-image: url('image_8.png'); 
-            background-repeat: no-repeat;
-            
-            /* 🎯 關鍵：定位到「下右圖」 */
-            /* 下排 = 偏移一倍高度 (-350px) */
-            /* 右圖 = 偏移兩倍寬度 (-666px) */
-            background-position: -666px -350px; 
-            
-            image-rendering: pixelated;
-            position: absolute;
-            left: 50%;
-            margin-left: calc(var(--sprite-w) / -2); 
-            bottom: 30px;
-            
-            /* 縮放至螢幕適當大小 */
-            transform: scale(0.2); 
-            transform-origin: bottom center;
-        }
-    </style>
-</head>
-<body>
-
-<div class="gba-body">
-    <div style="font-size: 10px; color: #555; margin-bottom: 5px; font-weight: bold;">STILL IMAGE TEST</div>
-    <div class="screen-bezel">
-        <div id="game-screen">
-            <div id="dog-sprite"></div>
+    <div class="info-panel">
+        <h3>✅ 修正後的邏輯設定：</h3>
+        <p>當你在開發主程式 HTML 時，請依照此標號進行 JavaScript 陣列設定：</p>
+        <div class="sequence-list">
+            <div class="seq-box"><strong>靜止 (Idle):</strong> 編號 6</div>
+            <div class="seq-box"><strong>行走循環 (Walk):</strong> 1 → 2 → 3 → 4 → 5</div>
         </div>
+        <p style="margin-top: 20px; color: #aaa; font-size: 14px;">
+            ※ 每一格尺寸固定為：寬 333px / 高 350px。<br>
+            ※ 若編號 6 確實位於下排右側，則背景位移座標應為 <code>x: -666px, y: -350px</code>。
+        </p>
     </div>
-    <div style="margin-top: 40px; color: #333; font-weight: bold;">請確認是否為「下右圖」</div>
-</div>
 
 </body>
 </html>
