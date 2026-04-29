@@ -3,37 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>White 6 GBA - Fixed</title>
+    <title>𓃥白六世界時鐘 - Walk Engine</title>
     <style>
         :root {
             --gba-color: #8b8b8b;
-            --screen-bg: #9bbc0f; 
-            /* 調整後的單幀比例 (依據 3x2 網格) */
+            --screen-bg: #9bbc0f; /* 經典 GB 綠 */
+            /* 修正後的單幀精靈圖比例 (333x350) */
             --sprite-w: 333px; 
             --sprite-h: 350px; 
         }
         body {
-            background-color: #222;
+            background-color: #1a1a1a;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
-            font-family: sans-serif;
+            font-family: 'Courier New', Courier, monospace;
             touch-action: manipulation;
             overflow: hidden;
+            -webkit-user-select: none; user-select: none;
         }
+        /* GBA 機體 */
         .gba-body {
             width: 320px;
-            height: 540px;
+            height: 560px;
             background: var(--gba-color);
-            border-radius: 15px 15px 70px 15px;
+            border-radius: 15px 15px 80px 15px;
             box-shadow: inset -5px -5px 15px rgba(0,0,0,0.4), 15px 15px 30px rgba(0,0,0,0.6);
             display: flex;
             flex-direction: column;
             align-items: center;
             padding: 20px;
+            position: relative;
         }
+        /* 螢幕外框 */
         .screen-bezel {
             width: 280px;
             height: 200px;
@@ -43,30 +47,15 @@
             justify-content: center;
             align-items: center;
             margin-bottom: 25px;
+            border: 4px solid #222;
             position: relative;
-            overflow: hidden; /* 確保白六不會跑出螢幕 */
+            overflow: hidden;
         }
         #game-screen {
             width: 240px;
             height: 160px;
             background: var(--screen-bg);
             position: relative;
-            border: 2px solid #000;
-        }
-        /* 核心修正：使用 background-size 並縮放容器 */
-        #dog-sprite {
-            width: var(--sprite-w);
-            height: var(--sprite-h);
-            background-image: url('image_8.PNG'); 
-            background-repeat: no-repeat;
-            background-position: 0px 0px;
-            image-rendering: pixelated;
-            position: absolute;
-            /* 將巨大的原始圖縮小到適合螢幕的大小 */
-            transform: scale(0.18); 
-            transform-origin: bottom center;
-            bottom: 30px; /* 站在地平線上 */
-            left: 50%;
         }
         /* 地平線 */
         .ground {
@@ -75,24 +64,78 @@
             width: 100%;
             height: 2px;
             background: #0f380f;
+            opacity: 0.5;
         }
-        /* 控制按鈕 */
-        .controls { width: 100%; display: flex; justify-content: space-between; padding: 0 10px; margin-top: 20px; }
-        .d-pad { display: grid; grid-template-columns: 45px 45px 45px; grid-template-rows: 45px 45px 45px; }
-        .btn { background: #222; color: #555; border: none; box-shadow: 0 4px #000; display: flex; justify-content: center; align-items: center; }
+        /* 白六精靈圖元件 */
+        #dog-sprite {
+            width: var(--sprite-w);
+            height: var(--sprite-h);
+            background-image: url('image_8.PNG'); /* 確保與 GitHub 上的檔名一致 */
+            background-repeat: no-repeat;
+            background-position: 0px 0px;
+            image-rendering: pixelated;
+            position: absolute;
+            /* 縮放巨大的原始圖至螢幕大小 (0.18倍) */
+            transform: scale(0.18); 
+            transform-origin: bottom center;
+            bottom: 30px; 
+            left: 50%;
+            transition: transform 0.1s linear;
+        }
+        /* 控制介面 */
+        .controls {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 10px;
+        }
+        .d-pad {
+            display: grid;
+            grid-template-columns: 45px 45px 45px;
+            grid-template-rows: 45px 45px 45px;
+        }
+        .btn {
+            background: #333;
+            color: #777;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+        }
         .btn:active { transform: translateY(2px); box-shadow: 0 2px #000; background: #111; }
-        .up { grid-column: 2; grid-row: 1; border-radius: 5px 5px 0 0; }
-        .left { grid-column: 1; grid-row: 2; border-radius: 5px 0 0 5px; }
+        .up    { grid-column: 2; grid-row: 1; border-radius: 5px 5px 0 0; }
+        .left  { grid-column: 1; grid-row: 2; border-radius: 5px 0 0 5px; }
         .right { grid-column: 3; grid-row: 2; border-radius: 0 5px 5px 0; }
-        .down { grid-column: 2; grid-row: 3; border-radius: 0 0 5px 5px; }
-        .action-btns { display: flex; gap: 15px; transform: rotate(-15deg); }
-        .round-btn { width: 55px; height: 55px; background: #8e1e3b; border-radius: 50%; box-shadow: 0 5px #5e1327; color: white; font-weight: bold; }
+        .down  { grid-column: 2; grid-row: 3; border-radius: 0 0 5px 5px; }
+
+        .action-btns {
+            display: flex;
+            gap: 20px;
+            transform: rotate(-15deg);
+        }
+        .round-btn {
+            width: 55px;
+            height: 55px;
+            background: #8e1e3b;
+            border-radius: 50%;
+            box-shadow: 0 5px #5e1327;
+            color: #ff99aa;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .round-btn:active { transform: translateY(2px); box-shadow: 0 2px #5e1327; }
     </style>
 </head>
 <body>
 
 <div class="gba-body">
-    <div style="font-size: 10px; color: #555; margin-bottom: 5px;">DOT MATRIX WITH STEREO SOUND</div>
+    <div style="font-size: 10px; color: #555; margin-bottom: 5px; font-weight: bold;">DOT MATRIX WITH STEREO SOUND</div>
     <div class="screen-bezel">
         <div id="game-screen">
             <div class="ground"></div>
@@ -107,66 +150,91 @@
             <button class="btn right" onmousedown="setKey('ArrowRight', true)" onmouseup="setKey('ArrowRight', false)" ontouchstart="setKey('ArrowRight', true)">▶</button>
             <button class="btn down" onmousedown="setKey('ArrowDown', true)" onmouseup="setKey('ArrowDown', false)" ontouchstart="setKey('ArrowDown', true)">▼</button>
         </div>
+
         <div class="action-btns">
             <button class="btn round-btn" onmousedown="setKey('KeyX', true)" onmouseup="setKey('KeyX', false)" ontouchstart="setKey('KeyX', true)">B</button>
             <button class="btn round-btn" onmousedown="setKey('KeyZ', true)" onmouseup="setKey('KeyZ', false)" ontouchstart="setKey('KeyZ', true)">A</button>
         </div>
     </div>
+    <div style="margin-top: 40px; color: #555; font-weight: bold; letter-spacing: 2px;">Nintendo GAME BOY</div>
 </div>
 
 <script>
-    const dog = document.getElementById('dog-sprite');
-    const frameW = 333; // 修正：依據 1000px 寬度圖檔除以 3
-    const frameH = 350; // 修正：依據 700px 高度圖檔除以 2
+    const dogSprite = document.getElementById('dog-sprite');
     
-    let keys = {};
-    let currentFrame = 0;
-    let posX = 120;
-    let isMoving = false;
-    let animTimer = null;
-    let facing = 1;
+    // 精靈貼圖參數 (對應 3 欄 2 列)
+    const frameW = 333; 
+    const frameH = 350; 
+    const cols = 3;
+    const totalFrames = 6;
 
-    function setKey(k, v) { 
-        keys[k] = v; 
-        if ((keys['ArrowLeft'] || keys['ArrowRight']) && !isMoving) {
+    // 遊戲狀態
+    let keys = {};
+    let isMoving = false;
+    let currentFrame = 0;
+    let animInterval = null;
+    let posX = 120;
+    let facing = 1; // 1 為右, -1 為左
+
+    function setKey(code, isPressed) {
+        keys[code] = isPressed;
+        const moveKeyPressed = keys['ArrowLeft'] || keys['ArrowRight'];
+        
+        if (moveKeyPressed && !isMoving) {
             isMoving = true;
-            startAnim();
-        } else if (!keys['ArrowLeft'] && !keys['ArrowRight']) {
+            startAnimation();
+        } else if (!moveKeyPressed && isMoving) {
             isMoving = false;
-            stopAnim();
+            stopAnimation();
         }
     }
 
-    function startAnim() {
-        animTimer = setInterval(() => {
-            currentFrame = (currentFrame + 1) % 6;
-            const col = currentFrame % 3;
-            const row = Math.floor(currentFrame / 3);
-            dog.style.backgroundPosition = `-${col * frameW}px -${row * frameH}px`;
+    // 動畫切換
+    function startAnimation() {
+        animInterval = setInterval(() => {
+            currentFrame = (currentFrame + 1) % totalFrames;
+            const col = currentFrame % cols;
+            const row = Math.floor(currentFrame / cols);
+            
+            // 更新背景偏移位置
+            dogSprite.style.backgroundPosition = `-${col * frameW}px -${row * frameH}px`;
         }, 120);
     }
 
-    function stopAnim() {
-        clearInterval(animTimer);
+    function stopAnimation() {
+        clearInterval(animInterval);
         currentFrame = 0;
-        dog.style.backgroundPosition = "0px 0px";
+        dogSprite.style.backgroundPosition = "0px 0px"; // 回到初始幀
     }
 
-    function loop() {
-        let speed = keys['KeyX'] ? 3 : 1.5;
-        if (keys['ArrowRight']) { posX += speed; facing = 1; }
-        if (keys['ArrowLeft']) { posX -= speed; facing = -1; }
-        
+    // 移動與渲染循環
+    function update() {
+        let speed = keys['KeyX'] ? 3 : 1.5; // 按住B鍵加速
+
+        if (keys['ArrowRight']) {
+            posX += speed;
+            facing = 1;
+        } else if (keys['ArrowLeft']) {
+            posX -= speed;
+            facing = -1;
+        }
+
+        // 螢幕邊界限制
         posX = Math.max(20, Math.min(220, posX));
-        dog.style.left = `calc(${posX}px - ${frameW/2}px)`;
-        dog.style.transform = `scale(0.18) scaleX(${facing})`;
-        
-        requestAnimationFrame(loop);
+
+        // 更新實際位置與朝向
+        dogSprite.style.left = `calc(${posX}px - ${frameW/2}px)`;
+        dogSprite.style.transform = `scale(0.18) scaleX(${facing})`;
+
+        requestAnimationFrame(update);
     }
 
+    // 鍵盤支援
     window.addEventListener('keydown', e => setKey(e.code, true));
     window.addEventListener('keyup', e => setKey(e.code, false));
-    loop();
+    window.addEventListener('mouseup', () => { keys = {}; stopAnimation(); isMoving = false; });
+
+    update();
 </script>
 </body>
 </html>
