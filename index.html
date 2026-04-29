@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>𓃥白六世界時鐘 - Sprite Engine Fixed</title>
+    <title>𓃥白六靜止圖測試</title>
     <style>
         :root {
             --gba-color: #8b8b8b;
             --screen-bg: #9bbc0f; 
-            /* ⚠️ 單幀精確像素：image_8.png 的總寬高除以 3欄 2列 */
+            /* ⚠️ 單幀精確尺寸 */
             --sprite-w: 333px; 
             --sprite-h: 350px; 
         }
@@ -19,16 +19,13 @@
             align-items: center;
             height: 100vh;
             margin: 0;
-            overflow: hidden;
-            touch-action: manipulation;
-            -webkit-user-select: none; user-select: none;
+            -webkit-user-select: none;
         }
         .gba-body {
             width: 320px;
             height: 560px;
             background: var(--gba-color);
             border-radius: 15px 15px 80px 15px;
-            box-shadow: inset -5px -5px 15px rgba(0,0,0,0.4), 15px 15px 30px rgba(0,0,0,0.6);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -43,9 +40,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            margin-bottom: 25px;
             border: 4px solid #111;
-            position: relative;
             overflow: hidden;
         }
         #game-screen {
@@ -54,119 +49,41 @@
             background: var(--screen-bg);
             position: relative;
         }
-        /* 核心精靈圖組件 */
+        /* 🔍 靜止圖測試元件 */
         #dog-sprite {
             width: var(--sprite-w);
             height: var(--sprite-h);
             background-image: url('image_8.png'); 
             background-repeat: no-repeat;
-            /* 預設靜止：下右圖 (索引 5) */
+            
+            /* 🎯 關鍵：定位到「下右圖」 */
+            /* 下排 = 偏移一倍高度 (-350px) */
+            /* 右圖 = 偏移兩倍寬度 (-666px) */
             background-position: -666px -350px; 
+            
             image-rendering: pixelated;
             position: absolute;
             left: 50%;
             margin-left: calc(var(--sprite-w) / -2); 
             bottom: 30px;
-            /* 縮放以適應螢幕 */
+            
+            /* 縮放至螢幕適當大小 */
             transform: scale(0.2); 
             transform-origin: bottom center;
-            transition: bottom 0.15s ease-out;
         }
-        .controls { width: 100%; display: flex; justify-content: space-between; padding: 0 10px; }
-        .d-pad { display: grid; grid-template-columns: 45px 45px 45px; grid-template-rows: 45px 45px 45px; }
-        .btn { background: #333; color: #777; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; font-size: 18px; }
-        .btn:active { transform: translateY(2px); background: #111; }
-        .up { grid-column: 2; grid-row: 1; border-radius: 5px 5px 0 0; }
-        .left { grid-column: 1; grid-row: 2; border-radius: 5px 0 0 5px; }
-        .right { grid-column: 3; grid-row: 2; border-radius: 0 5px 5px 0; }
-        .down { grid-column: 2; grid-row: 3; border-radius: 0 0 5px 5px; }
-        .action-btns { display: flex; gap: 20px; transform: rotate(-15deg); margin-top: 20px; }
-        .round-btn { width: 55px; height: 55px; background: #8e1e3b; border-radius: 50%; box-shadow: 0 5px #5e1327; color: white; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="gba-body">
-    <div style="font-size: 10px; color: #555; margin-bottom: 5px; font-weight: bold;">DOT MATRIX WITH STEREO SOUND</div>
+    <div style="font-size: 10px; color: #555; margin-bottom: 5px; font-weight: bold;">STILL IMAGE TEST</div>
     <div class="screen-bezel">
         <div id="game-screen">
             <div id="dog-sprite"></div>
         </div>
     </div>
-    <div class="controls">
-        <div class="d-pad">
-            <button class="btn up">▲</button>
-            <button class="btn left" ontouchstart="handleMove('ArrowLeft', true)" onmousedown="handleMove('ArrowLeft', true)">◀</button>
-            <button class="btn right" ontouchstart="handleMove('ArrowRight', true)" onmousedown="handleMove('ArrowRight', true)">▶</button>
-            <button class="btn down">▼</button>
-        </div>
-        <div class="action-btns">
-            <button class="round-btn" ontouchstart="jump()">A</button>
-            <button class="round-btn">B</button>
-        </div>
-    </div>
+    <div style="margin-top: 40px; color: #333; font-weight: bold;">請確認是否為「下右圖」</div>
 </div>
-
-<script>
-    const dogSprite = document.getElementById('dog-sprite');
-    
-    // 網格參數 (3x2)
-    const frameW = 333; 
-    const frameH = 350; 
-    
-    // 動作定義
-    // 索引：上左(0), 上中(1), 上右(2), 下左(3), 下中(4), 下右(5)
-    const walkSequence = [0, 1, 2, 3, 4]; // 行走順序
-    const idleFrame = 5; // 靜止圖 (下右圖)
-
-    let isMoving = false;
-    let walkIndex = 0;
-    let animInterval = null;
-    let facing = 1;
-
-    function updateFrame(frameIdx) {
-        const col = frameIdx % 3;
-        const row = Math.floor(frameIdx / 3);
-        dogSprite.style.backgroundPosition = `-${col * frameW}px -${row * frameH}px`;
-    }
-
-    function handleMove(dir, pressed) {
-        if (pressed) {
-            isMoving = true;
-            facing = (dir === 'ArrowLeft') ? -1 : 1;
-            // 翻轉狗狗方向
-            dogSprite.style.transform = `scale(0.2) scaleX(${facing})`;
-            if (!animInterval) startAnimation();
-        } else {
-            isMoving = false;
-            stopAnimation();
-        }
-    }
-
-    function startAnimation() {
-        animInterval = setInterval(() => {
-            walkIndex = (walkIndex + 1) % walkSequence.length;
-            updateFrame(walkSequence[walkIndex]);
-        }, 110);
-    }
-
-    function stopAnimation() {
-        clearInterval(animInterval);
-        animInterval = null;
-        walkIndex = 0;
-        updateFrame(idleFrame); // 恢復靜止圖
-    }
-
-    function jump() {
-        dogSprite.style.bottom = "85px";
-        setTimeout(() => { dogSprite.style.bottom = "30px"; }, 250);
-    }
-
-    // 釋放按鍵監聽
-    const clear = () => { if (isMoving) handleMove('', false); };
-    window.addEventListener('mouseup', clear);
-    window.addEventListener('touchend', clear);
-</script>
 
 </body>
 </html>
