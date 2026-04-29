@@ -3,82 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>𓃥白六世界時鐘 - Sprite Animation Fixed</title>
+    <title>𓃥白六世界時鐘 - Sprite Engine Final</title>
     <style>
         :root {
             --gba-color: #8b8b8b;
             --screen-bg: #9bbc0f; 
+            /* ⚠️ 必須與 image_8.png 的單格尺寸完全一致 */
             --sprite-w: 333px; 
             --sprite-h: 350px; 
         }
         body {
             background-color: #1a1a1a;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            touch-action: manipulation;
-            overflow: hidden;
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh; margin: 0;
+            touch-action: manipulation; overflow: hidden;
             -webkit-user-select: none; user-select: none;
         }
         .gba-body {
-            width: 320px;
-            height: 560px;
+            width: 320px; height: 560px;
             background: var(--gba-color);
             border-radius: 15px 15px 80px 15px;
             box-shadow: inset -5px -5px 15px rgba(0,0,0,0.4), 15px 15px 30px rgba(0,0,0,0.6);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-            position: relative;
+            display: flex; flex-direction: column; align-items: center;
+            padding: 20px; position: relative;
         }
         .screen-bezel {
-            width: 280px;
-            height: 200px;
-            background: #333;
-            border-radius: 5px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-bottom: 25px;
-            border: 4px solid #111;
-            position: relative;
-            overflow: hidden;
+            width: 280px; height: 200px;
+            background: #333; border-radius: 5px;
+            display: flex; justify-content: center; align-items: center;
+            margin-bottom: 25px; border: 4px solid #111;
+            position: relative; overflow: hidden;
         }
         #game-screen {
-            width: 240px;
-            height: 160px;
-            background: var(--screen-bg);
-            position: relative;
+            width: 240px; height: 160px;
+            background: var(--screen-bg); position: relative;
         }
         #dog-sprite {
             width: var(--sprite-w);
             height: var(--sprite-h);
             background-image: url('image_8.png'); 
             background-repeat: no-repeat;
-            /* 預設靜止圖：下右圖 (2, 1) */
+            /* 預設顯示：下右圖 (Index 5) */
             background-position: -666px -350px; 
             image-rendering: pixelated;
             position: absolute;
             left: 50%;
             margin-left: calc(var(--sprite-w) / -2); 
-            bottom: 30px;
-            /* 調整縮放以符合螢幕 */
-            transform: scale(0.18); 
+            bottom: 25px;
+            transform: scale(0.2); 
             transform-origin: bottom center;
-            transition: bottom 0.1s ease-out;
         }
-        /* 控制介面 */
+        /* 控制按鈕 */
         .controls { width: 100%; display: flex; justify-content: space-between; padding: 0 10px; }
         .d-pad { display: grid; grid-template-columns: 45px 45px 45px; grid-template-rows: 45px 45px 45px; }
         .btn { background: #333; color: #777; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; }
         .btn:active { transform: translateY(2px); background: #111; }
-        .up { grid-column: 2; grid-row: 1; border-radius: 5px 5px 0 0; }
         .left { grid-column: 1; grid-row: 2; border-radius: 5px 0 0 5px; }
         .right { grid-column: 3; grid-row: 2; border-radius: 0 5px 5px 0; }
-        .down { grid-column: 2; grid-row: 3; border-radius: 0 0 5px 5px; }
         .action-btns { display: flex; gap: 20px; transform: rotate(-15deg); margin-top: 20px; }
         .round-btn { width: 55px; height: 55px; background: #8e1e3b; border-radius: 50%; box-shadow: 0 5px #5e1327; color: white; font-weight: bold; }
     </style>
@@ -94,10 +75,8 @@
     </div>
     <div class="controls">
         <div class="d-pad">
-            <button class="btn up">▲</button>
             <button class="btn left" ontouchstart="handleInput('ArrowLeft', true)" onmousedown="handleInput('ArrowLeft', true)">◀</button>
             <button class="btn right" ontouchstart="handleInput('ArrowRight', true)" onmousedown="handleInput('ArrowRight', true)">▶</button>
-            <button class="btn down">▼</button>
         </div>
         <div class="action-btns">
             <button class="round-btn" ontouchstart="jump()">A</button>
@@ -109,53 +88,58 @@
 <script>
     const dogSprite = document.getElementById('dog-sprite');
     
-    // image_8.png 座標對應表
-    const frameW = 333; 
-    const frameH = 350; 
-    const walkSequence = [0, 1, 2, 3, 4]; // 行走順序：上左, 上中, 上右, 下左, 下中
-    const idleFrame = 5; // 靜止：下右
+    // 網格參數
+    const fw = 333; 
+    const fh = 350;
+    const idleIdx = 5; // 下右圖
+    const walkSeq = [0, 1, 2, 3, 4]; // 上左, 上中, 上右, 下左, 下中
 
-    let walkIndex = 0;
-    let animInterval = null;
+    let animTimer = null;
+    let seqIdx = 0;
     let facing = 1;
-    let isMoving = false;
 
-    function setFrame(idx) {
-        const col = idx % 3;
-        const row = Math.floor(idx / 3);
-        dogSprite.style.backgroundPosition = `-${col * frameW}px -${row * frameH}px`;
+    function updateFrame(index) {
+        const col = index % 3;
+        const row = Math.floor(index / 3);
+        // 確保精確位移，避免露出其他狗狗
+        dogSprite.style.backgroundPosition = `-${col * fw}px -${row * fh}px`;
     }
 
-    function handleInput(dir, pressed) {
-        if (pressed) {
-            isMoving = true;
+    function handleInput(dir, isPressed) {
+        if (isPressed) {
             facing = (dir === 'ArrowLeft') ? -1 : 1;
-            dogSprite.style.transform = `scale(0.18) scaleX(${facing})`;
-            if (!animInterval) {
-                animInterval = setInterval(() => {
-                    walkIndex = (walkIndex + 1) % walkSequence.length;
-                    setFrame(walkSequence[walkIndex]);
-                }, 120);
+            dogSprite.style.transform = `scale(0.2) scaleX(${facing})`;
+            
+            if (!animTimer) {
+                animTimer = setInterval(() => {
+                    updateFrame(walkSeq[seqIdx]);
+                    seqIdx = (seqIdx + 1) % walkSeq.length;
+                }, 110);
             }
         } else {
-            isMoving = false;
-            if (animInterval) {
-                clearInterval(animInterval);
-                animInterval = null;
-            }
-            walkIndex = 0;
-            setFrame(idleFrame);
+            stopAnim();
         }
     }
 
-    function jump() {
-        dogSprite.style.bottom = "85px";
-        setTimeout(() => { dogSprite.style.bottom = "30px"; }, 250);
+    function stopAnim() {
+        clearInterval(animTimer);
+        animTimer = null;
+        seqIdx = 0;
+        updateFrame(idleIdx); // 回到靜止圖（下右）
     }
 
-    const release = () => handleInput('', false);
+    function jump() {
+        dogSprite.style.transition = "bottom 0.15s ease-out";
+        dogSprite.style.bottom = "80px";
+        setTimeout(() => { dogSprite.style.bottom = "25px"; }, 200);
+    }
+
+    const release = () => stopAnim();
     window.addEventListener('mouseup', release);
     window.addEventListener('touchend', release);
+
+    // 初始化顯示靜止圖
+    updateFrame(idleIdx);
 </script>
 </body>
 </html>
