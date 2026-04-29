@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>𓃥白六世界時鐘 - Walk Engine</title>
+    <title>𓃥白六 GBA 模擬器 - Walk Engine Fixed</title>
     <style>
         :root {
             --gba-color: #8b8b8b;
-            --screen-bg: #9bbc0f; /* 經典 GB 綠 */
-            /* 修正後的單幀精靈圖比例 (333x350) */
+            --screen-bg: #9bbc0f; /* 經典 GB 螢幕綠 */
+            /* **⚠️ 核心修正：將單幀像素尺寸修改為正確數值 (3x2 網格)** */
             --sprite-w: 333px; 
             --sprite-h: 350px; 
         }
@@ -27,7 +27,7 @@
         /* GBA 機體 */
         .gba-body {
             width: 320px;
-            height: 560px;
+            height: 540px;
             background: var(--gba-color);
             border-radius: 15px 15px 80px 15px;
             box-shadow: inset -5px -5px 15px rgba(0,0,0,0.4), 15px 15px 30px rgba(0,0,0,0.6);
@@ -47,9 +47,9 @@
             justify-content: center;
             align-items: center;
             margin-bottom: 25px;
-            border: 4px solid #222;
+            border: 4px solid #111;
             position: relative;
-            overflow: hidden;
+            overflow: hidden; /* 確保白六不會跑出螢幕 */
         }
         #game-screen {
             width: 240px;
@@ -66,115 +66,78 @@
             background: #0f380f;
             opacity: 0.5;
         }
-        /* 白六精靈圖元件 */
+        /* **⚠️ 核心修正：精靈圖元件 (CSS 縮放)** */
         #dog-sprite {
             width: var(--sprite-w);
             height: var(--sprite-h);
-            background-image: url('image_8.PNG'); /* 確保與 GitHub 上的檔名一致 */
+            /* **⚠️ 請確保這裡檔名對應你的透明貼圖檔** */
+            background-image: url('image_8_transparent.PNG'); 
             background-repeat: no-repeat;
-            background-position: 0px 0px;
+            background-position: 0px 0px; /* 初始幀 */
             image-rendering: pixelated;
             position: absolute;
-            /* 縮放巨大的原始圖至螢幕大小 (0.18倍) */
+            
+            /* **⚠️ 用 CSS 縮放巨大的原始圖至螢幕大小 (0.18倍)** */
             transform: scale(0.18); 
             transform-origin: bottom center;
-            bottom: 30px; 
+            bottom: 30px; /* 站在地平線上的高度 */
             left: 50%;
+            
             transition: transform 0.1s linear;
         }
-        /* 控制介面 */
-        .controls {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 10px;
-        }
-        .d-pad {
-            display: grid;
-            grid-template-columns: 45px 45px 45px;
-            grid-template-rows: 45px 45px 45px;
-        }
-        .btn {
-            background: #333;
-            color: #777;
-            border: none;
-            cursor: pointer;
-            box-shadow: 0 4px #000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 18px;
-        }
+        /* 控制區按鈕樣式與之前相同 */
+        .controls { width: 100%; display: flex; justify-content: space-between; padding: 0 10px; margin-top: 10px; }
+        .d-pad { display: grid; grid-template-columns: 45px 45px 45px; grid-template-rows: 45px 45px 45px; }
+        .btn { background: #333; color: #777; border: none; cursor: pointer; box-shadow: 0 4px #000; font-size: 18px; }
         .btn:active { transform: translateY(2px); box-shadow: 0 2px #000; background: #111; }
-        .up    { grid-column: 2; grid-row: 1; border-radius: 5px 5px 0 0; }
-        .left  { grid-column: 1; grid-row: 2; border-radius: 5px 0 0 5px; }
+        .up { grid-column: 2; grid-row: 1; border-radius: 5px 5px 0 0; }
+        .left { grid-column: 1; grid-row: 2; border-radius: 5px 0 0 5px; }
         .right { grid-column: 3; grid-row: 2; border-radius: 0 5px 5px 0; }
-        .down  { grid-column: 2; grid-row: 3; border-radius: 0 0 5px 5px; }
-
-        .action-btns {
-            display: flex;
-            gap: 20px;
-            transform: rotate(-15deg);
-        }
-        .round-btn {
-            width: 55px;
-            height: 55px;
-            background: #8e1e3b;
-            border-radius: 50%;
-            box-shadow: 0 5px #5e1327;
-            color: #ff99aa;
-            font-weight: bold;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .round-btn:active { transform: translateY(2px); box-shadow: 0 2px #5e1327; }
+        .down { grid-column: 2; grid-row: 3; border-radius: 0 0 5px 5px; }
+        .action-btns { display: flex; gap: 20px; transform: rotate(-15deg); }
+        .round-btn { width: 55px; height: 55px; background: #8e1e3b; border-radius: 50%; box-shadow: 0 5px #5e1327; color: rgba(255,255,255,0.3); font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="gba-body">
-    <div style="font-size: 10px; color: #555; margin-bottom: 5px; font-weight: bold;">DOT MATRIX WITH STEREO SOUND</div>
+    <div style="font-size: 10px; color: #555; margin-bottom: 5px;">DOT MATRIX WITH STEREO SOUND</div>
     <div class="screen-bezel">
         <div id="game-screen">
             <div class="ground"></div>
             <div id="dog-sprite"></div>
         </div>
     </div>
-
     <div class="controls">
         <div class="d-pad">
-            <button class="btn up" onmousedown="setKey('ArrowUp', true)" onmouseup="setKey('ArrowUp', false)" ontouchstart="setKey('ArrowUp', true)">▲</button>
-            <button class="btn left" onmousedown="setKey('ArrowLeft', true)" onmouseup="setKey('ArrowLeft', false)" ontouchstart="setKey('ArrowLeft', true)">◀</button>
-            <button class="btn right" onmousedown="setKey('ArrowRight', true)" onmouseup="setKey('ArrowRight', false)" ontouchstart="setKey('ArrowRight', true)">▶</button>
-            <button class="btn down" onmousedown="setKey('ArrowDown', true)" onmouseup="setKey('ArrowDown', false)" ontouchstart="setKey('ArrowDown', true)">▼</button>
+            <button class="btn up" ontouchstart="setKey('ArrowUp', true)">▲</button>
+            <button class="btn left" ontouchstart="setKey('ArrowLeft', true)">◀</button>
+            <button class="btn right" ontouchstart="setKey('ArrowRight', true)">▶</button>
+            <button class="btn down" ontouchstart="setKey('ArrowDown', true)">▼</button>
         </div>
-
         <div class="action-btns">
-            <button class="btn round-btn" onmousedown="setKey('KeyX', true)" onmouseup="setKey('KeyX', false)" ontouchstart="setKey('KeyX', true)">B</button>
-            <button class="btn round-btn" onmousedown="setKey('KeyZ', true)" onmouseup="setKey('KeyZ', false)" ontouchstart="setKey('KeyZ', true)">A</button>
+            <button class="round-btn" ontouchstart="setKey('KeyX', true)">B</button>
+            <button class="round-btn" ontouchstart="setKey('KeyZ', true)">A</button>
         </div>
     </div>
-    <div style="margin-top: 40px; color: #555; font-weight: bold; letter-spacing: 2px;">Nintendo GAME BOY</div>
 </div>
 
 <script>
     const dogSprite = document.getElementById('dog-sprite');
     
-    // 精靈貼圖參數 (對應 3 欄 2 列)
-    const frameW = 333; 
-    const frameH = 350; 
-    const cols = 3;
-    const totalFrames = 6;
+    // **⚠️ 精靈貼圖參數修正 (對應 3x2 貼圖)**
+    const frameW = 333; // ⚠️ 修改為正確像素寬度
+    const frameH = 350; // ⚠️ 修改為正確像素高度
+    const cols = 3; // 貼圖欄數
+    const totalFrames = 6; // 總幀數 (3欄x2列)
 
     // 遊戲狀態
     let keys = {};
     let isMoving = false;
     let currentFrame = 0;
     let animInterval = null;
-    let posX = 120;
-    let facing = 1; // 1 為右, -1 為左
+    let posX = 120; // 初始螢幕位置
+    let facing = 1; // 1 為右, -1 為左 (水平鏡像)
 
     function setKey(code, isPressed) {
         keys[code] = isPressed;
@@ -189,26 +152,28 @@
         }
     }
 
-    // 動畫切換
+    // --- **⚠️ 核心動畫幀切換邏輯 (滾動 3x2 網格)** ---
     function startAnimation() {
         animInterval = setInterval(() => {
             currentFrame = (currentFrame + 1) % totalFrames;
             const col = currentFrame % cols;
             const row = Math.floor(currentFrame / cols);
             
-            // 更新背景偏移位置
-            dogSprite.style.backgroundPosition = `-${col * frameW}px -${row * frameH}px`;
-        }, 120);
+            // 計算負值偏移量：將圖片向左/上捲動
+            const xOffset = -col * frameW;
+            const yOffset = -row * frameH;
+            dogSprite.style.backgroundPosition = `${xOffset}px ${yOffset}px`;
+        }, 120); // 每 0.12 秒切換一幀
     }
 
     function stopAnimation() {
         clearInterval(animInterval);
         currentFrame = 0;
-        dogSprite.style.backgroundPosition = "0px 0px"; // 回到初始幀
+        dogSprite.style.backgroundPosition = "0px 0px"; // 回到第一幀
     }
 
-    // 移動與渲染循環
-    function update() {
+    // 遊戲循環 (處理移動與轉向)
+    function loop() {
         let speed = keys['KeyX'] ? 3 : 1.5; // 按住B鍵加速
 
         if (keys['ArrowRight']) {
@@ -219,22 +184,24 @@
             facing = -1;
         }
 
-        // 螢幕邊界限制
+        // 邊界限制
         posX = Math.max(20, Math.min(220, posX));
 
-        // 更新實際位置與朝向
+        // 更新位置與朝向
         dogSprite.style.left = `calc(${posX}px - ${frameW/2}px)`;
+        // 用 CSS 的 transform 同時處理縮放與水平鏡像
         dogSprite.style.transform = `scale(0.18) scaleX(${facing})`;
 
-        requestAnimationFrame(update);
+        requestAnimationFrame(loop);
     }
 
-    // 鍵盤支援
+    // 防止觸控卡死的全域監聽
+    window.addEventListener('touchend', () => { keys = {}; stopAnimation(); isMoving = false; });
+    window.addEventListener('mouseup', () => { keys = {}; stopAnimation(); isMoving = false; });
     window.addEventListener('keydown', e => setKey(e.code, true));
     window.addEventListener('keyup', e => setKey(e.code, false));
-    window.addEventListener('mouseup', () => { keys = {}; stopAnimation(); isMoving = false; });
 
-    update();
+    loop();
 </script>
 </body>
 </html>
