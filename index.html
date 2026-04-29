@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>𓃥白六世界時鐘 - Pixel Walk Engine</title>
+    <title>𓃥白六 GBA 模擬器 - Walk Engine Fixed</title>
     <style>
         :root {
             --gba-color: #8b8b8b;
-            --screen-bg: #9bbc0f; 
-            /* ⚠️ 根據 image_8.png 網格設定單幀尺寸 */
-            --sprite-w: 333px; 
-            --sprite-h: 350px; 
+            --screen-bg: #9bbc0f; /* 經典 GB 綠 */
+            /* **⚠️ 核心修正 1：設定正確的單幀網格尺寸** */
+            --sprite-w: 333px; /* 單幀狗狗的寬度 */
+            --sprite-h: 350px; /* 單幀狗狗的高度 */
         }
         body {
             background-color: #1a1a1a;
@@ -24,7 +24,6 @@
             overflow: hidden;
             -webkit-user-select: none; user-select: none;
         }
-        /* GBA 機體樣式 */
         .gba-body {
             width: 320px;
             height: 560px;
@@ -56,18 +55,6 @@
             background: var(--screen-bg);
             position: relative;
         }
-        /* 滾動背景 (原地踏步感來源) */
-        #scrolling-bg {
-            position: absolute;
-            top: 0;
-            left: -50px;
-            width: 500px;
-            height: 100%;
-            background-image: 
-                linear-gradient(90deg, rgba(15, 56, 15, 0.15) 1px, transparent 1px),
-                linear-gradient(rgba(15, 56, 15, 0.1) 1px, transparent 1px);
-            background-size: 40px 40px;
-        }
         .ground {
             position: absolute;
             bottom: 30px;
@@ -76,30 +63,31 @@
             background: #0f380f;
             opacity: 0.5;
         }
-        /* 白六精靈圖 */
+        /* **⚠️ 核心修正 2：精靈圖定位與縮放** */
         #dog-sprite {
             width: var(--sprite-w);
             height: var(--sprite-h);
-            background-image: url('image_8.png'); 
+            background-image: url('image_8.PNG'); /* 確保檔名大小寫一致 */
             background-repeat: no-repeat;
-            background-position: 0px 0px; /* 初始站立圖 */
+            background-position: 0px 0px;
             image-rendering: pixelated;
             position: absolute;
             
-            /* 固定置中邏輯 */
+            /* **🔒 修正置中邏輯：left 50% 配合 margin-left 負值** */
             left: 50%;
             margin-left: calc(var(--sprite-w) / -2); 
-            bottom: 30px;
             
-            /* 縮放比例 */
-            transform: scale(0.2); 
+            /* **⚠️ 用 CSS 縮放巨大的原始圖至螢幕大小 (0.18倍)** */
+            transform: scale(0.18); 
             transform-origin: bottom center;
-            transition: bottom 0.1s ease-out;
+            bottom: 30px; /* 站在地平線上的高度 */
+            
+            transition: transform 0.1s linear;
         }
-        /* 控制按鈕 */
+        /* 按鈕樣式與之前相同 */
         .controls { width: 100%; display: flex; justify-content: space-between; padding: 0 10px; }
         .d-pad { display: grid; grid-template-columns: 45px 45px 45px; grid-template-rows: 45px 45px 45px; }
-        .btn { background: #333; color: #777; border: none; cursor: pointer; box-shadow: 0 4px #000; font-size: 18px; display: flex; justify-content: center; align-items: center; }
+        .btn { background: #333; color: #777; border: none; cursor: pointer; font-size: 18px; display: flex; justify-content: center; align-items: center; }
         .btn:active { transform: translateY(2px); box-shadow: 0 2px #000; background: #111; }
         .up { grid-column: 2; grid-row: 1; border-radius: 5px 5px 0 0; }
         .left { grid-column: 1; grid-row: 2; border-radius: 5px 0 0 5px; }
@@ -107,7 +95,6 @@
         .down { grid-column: 2; grid-row: 3; border-radius: 0 0 5px 5px; }
         .action-btns { display: flex; gap: 20px; transform: rotate(-15deg); margin-top: 20px; }
         .round-btn { width: 55px; height: 55px; background: #8e1e3b; border-radius: 50%; box-shadow: 0 5px #5e1327; color: rgba(255,255,255,0.4); font-weight: bold; }
-        .label { font-size: 10px; color: #555; text-align: center; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -116,7 +103,6 @@
     <div style="font-size: 10px; color: #555; margin-bottom: 5px; font-weight: bold;">DOT MATRIX WITH STEREO SOUND</div>
     <div class="screen-bezel">
         <div id="game-screen">
-            <div id="scrolling-bg"></div>
             <div class="ground"></div>
             <div id="dog-sprite"></div>
         </div>
@@ -129,37 +115,30 @@
             <button class="btn down">▼</button>
         </div>
         <div class="action-btns">
-            <div>
-                <button class="btn round-btn" ontouchstart="setKey('KeyX', true)" onmousedown="setKey('KeyX', true)">B</button>
-                <div class="label">RUN</div>
-            </div>
-            <div>
-                <button class="btn round-btn" ontouchstart="jump()">A</button>
-                <div class="label">JUMP</div>
-            </div>
+            <button class="round-btn" ontouchstart="setKey('KeyX', true)" onmousedown="setKey('KeyX', true)">B</button>
+            <button class="round-btn" ontouchstart="jump()">A</button>
         </div>
     </div>
 </div>
 
 <script>
     const dogSprite = document.getElementById('dog-sprite');
-    const scrollingBg = document.getElementById('scrolling-bg');
     
-    // image_8.png 2x3 規格參數
-    const frameW = 333; 
-    const frameH = 350; 
-    const cols = 3; 
-    const totalFrames = 6;
+    // **⚠️ 精靈貼圖參數修正 (對應 3x2 貼圖)**
+    const frameW = 333; // ⚠️ 修改為正確像素寬度
+    const frameH = 350; // ⚠️ 修改為正確像素高度
+    const cols = 3; // 貼圖欄數
+    const totalFrames = 6; // 總幀數 (3欄x2列)
 
+    // 遊戲狀態
     let keys = {};
     let isMoving = false;
     let currentFrame = 0;
     let animInterval = null;
-    let bgPos = 0;
-    let facing = 1;
+    let posX = 120; // 初始螢幕位置
+    let facing = 1; // 1 為右, -1 為左 (水平鏡像)
     let isJumping = false;
 
-    // 控制鍵處理
     function setKey(code, isPressed) {
         keys[code] = isPressed;
         const moveKeyPressed = keys['ArrowLeft'] || keys['ArrowRight'];
@@ -173,70 +152,62 @@
         }
     }
 
-    // A 鍵跳躍邏輯
+    // A 鍵跳躍
     function jump() {
         if (isJumping) return;
         isJumping = true;
-        dogSprite.style.bottom = "85px";
+        dogSprite.style.bottom = "80px";
         setTimeout(() => {
             dogSprite.style.bottom = "30px";
             setTimeout(() => { isJumping = false; }, 100);
-        }, 250);
+        }, 300);
     }
 
-    // 幀切換邏輯：行走時循環 6 幀，停止時鎖定第 0 幀
+    // --- **⚠️ 核心動畫幀切換邏輯 (滾動 3x2 網格)** ---
     function startAnimation() {
-        if (animInterval) clearInterval(animInterval);
+        if (animInterval) clearInterval(animInterval); // 防止計時器堆疊
         animInterval = setInterval(() => {
             currentFrame = (currentFrame + 1) % totalFrames;
-            updateSpritePosition();
-        }, 110);
+            const col = currentFrame % cols;
+            const row = Math.floor(currentFrame / cols);
+            
+            // 計算負值偏移量：將圖片向左/上捲動
+            dogSprite.style.backgroundPosition = `-${col * frameW}px -${row * frameH}px`;
+        }, 120); // 每 0.12 秒切換一幀
     }
 
     function stopAnimation() {
         clearInterval(animInterval);
-        animInterval = null;
-        currentFrame = 0; // 恢復站立圖
-        updateSpritePosition();
+        currentFrame = 0;
+        dogSprite.style.backgroundPosition = "0px 0px"; // 回到第一幀
     }
 
-    function updateSpritePosition() {
-        const col = currentFrame % cols;
-        const row = Math.floor(currentFrame / cols);
-        dogSprite.style.backgroundPosition = `-${col * frameW}px -${row * frameH}px`;
-    }
-
-    // 遊戲主迴圈
+    // 遊戲循環 (處理移動)
     function loop() {
-        let speed = keys['KeyX'] ? 5 : 2.5; 
+        let speed = keys['KeyX'] ? 3 : 1.5; // 按住B鍵加速
 
         if (keys['ArrowRight']) {
-            bgPos -= speed;
+            posX += speed;
             facing = 1;
         } else if (keys['ArrowLeft']) {
-            bgPos += speed;
+            posX -= speed;
             facing = -1;
         }
 
-        // 背景滾動
-        scrollingBg.style.transform = `translateX(${bgPos % 40}px)`;
-        // 白六原地翻轉與縮放
-        dogSprite.style.transform = `scale(0.2) scaleX(${facing})`;
+        // 螢幕邊界限制
+        posX = Math.max(20, Math.min(220, posX));
+
+        // 更新朝向 (scale + scaleX) 與置中位置
+        // **⚠️ 鎖定在中間原地踏步 (只處理facing和scale)**
+        dogSprite.style.transform = `scale(0.18) scaleX(${facing})`;
 
         requestAnimationFrame(loop);
     }
 
-    // 釋放按鍵監聽
-    const releaseKeys = () => { 
-        keys = {}; 
-        if (isMoving) {
-            isMoving = false;
-            stopAnimation();
-        }
-    };
-    
-    window.addEventListener('mouseup', releaseKeys);
+    // 防止觸控卡死的全域監聽
+    const releaseKeys = () => { keys = {}; stopAnimation(); isMoving = false; };
     window.addEventListener('touchend', releaseKeys);
+    window.addEventListener('mouseup', releaseKeys);
     window.addEventListener('keydown', e => setKey(e.code, true));
     window.addEventListener('keyup', e => setKey(e.code, false));
 
