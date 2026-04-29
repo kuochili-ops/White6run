@@ -2,6 +2,107 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>精靈圖網格校正工具 - image_8.png</title>
+    <style>
+        body {
+            background-color: #222;
+            color: #fff;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            position: relative;
+            /* 根據 333x350 計算出的總寬高 */
+            width: 999px; 
+            height: 700px;
+            background-image: url('image_8.png');
+            background-repeat: no-repeat;
+            border: 2px solid #555;
+        }
+        .grid-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+        }
+        .cell {
+            border: 2px dashed rgba(255, 0, 0, 0.7);
+            box-sizing: border-box;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .cell::before {
+            content: attr(data-index);
+            font-size: 80px;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.8);
+            text-shadow: 4px 4px 0px #000;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 30px;
+            border-radius: 10px;
+        }
+        .cell-info {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            font-size: 14px;
+            background: rgba(0,0,0,0.7);
+            padding: 5px;
+            color: #0f0;
+        }
+        .legend {
+            margin-top: 20px;
+            background: #333;
+            padding: 20px;
+            border-radius: 8px;
+            line-height: 1.6;
+        }
+        span.highlight { color: #ff4444; font-weight: bold; }
+        span.coord { color: #00ff00; }
+    </style>
+</head>
+<body>
+
+    <h2>image_8.png 3x2 網格分析儀</h2>
+    
+    <div class="container">
+        <div class="grid-overlay">
+            <div class="cell" data-index="0"><div class="cell-info">上左 (0,0)</div></div>
+            <div class="cell" data-index="1"><div class="cell-info">上中 (1,0)</div></div>
+            <div class="cell" data-index="2"><div class="cell-info">上右 (2,0)</div></div>
+            <div class="cell" data-index="3"><div class="cell-info">下左 (0,1)</div></div>
+            <div class="cell" data-index="4"><div class="cell-info">下中 (1,1)</div></div>
+            <div class="cell" data-index="5"><div class="cell-info">下右 (2,1)</div></div>
+        </div>
+    </div>
+
+    <div class="legend">
+        <h3>配置參考表：</h3>
+        <ul>
+            <li><span class="highlight">靜止圖：</span> 編號 5 <span class="coord">(下右)</span></li>
+            <li><span class="highlight">起步圖：</span> 編號 0 <span class="coord">(上左)</span></li>
+            <li><span class="highlight">行走序列：</span> 0 → 1 → 2 → 3 → 4</li>
+            <li><strong>單幀尺寸：</strong> 333px × 350px</li>
+        </ul>
+        <p>※ 如果紅框沒有對準狗狗的身體，代表圖片原始尺寸並非 999x700，需調整 CSS 中的 <code>width</code> 與 <code>height</code>。</p>
+    </div>
+
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>𓃥白六靜止圖測試</title>
     <style>
