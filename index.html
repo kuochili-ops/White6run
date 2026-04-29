@@ -2,117 +2,191 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>𓃥白六精靈圖編號修正工具</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>𓃥白六世界時鐘</title>
     <style>
+        :root {
+            --gba-color: #8b8b8b;
+            --screen-bg: #9bbc0f; 
+            /* 單格精確尺寸 */
+            --sprite-w: 333px; 
+            --sprite-h: 350px; 
+        }
         body {
-            background-color: #222;
-            color: #fff;
-            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            background-color: #1a1a1a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            touch-action: manipulation;
+            overflow: hidden;
+            -webkit-user-select: none; user-select: none;
+        }
+        .gba-body {
+            width: 320px;
+            height: 560px;
+            background: var(--gba-color);
+            border-radius: 15px 15px 80px 15px;
+            box-shadow: inset -5px -5px 15px rgba(0,0,0,0.4), 15px 15px 30px rgba(0,0,0,0.6);
             display: flex;
             flex-direction: column;
             align-items: center;
             padding: 20px;
-        }
-        .container {
             position: relative;
-            /* 單幀 333x350，總共 999x700 */
-            width: 999px; 
-            height: 700px;
-            background-image: url('image_8.png');
-            background-repeat: no-repeat;
-            background-size: 999px 700px;
-            border: 3px solid #444;
         }
-        .grid-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            grid-template-rows: repeat(2, 1fr);
-        }
-        .cell {
-            border: 2px solid #ff0000;
-            box-sizing: border-box;
-            position: relative;
+        .screen-bezel {
+            width: 280px;
+            height: 200px;
+            background: #333;
+            border-radius: 5px;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: rgba(0, 0, 0, 0.1);
+            border: 4px solid #111;
+            position: relative;
+            overflow: hidden;
         }
-        .cell::before {
-            content: attr(data-label);
-            font-size: 100px;
-            font-weight: 900;
-            color: #fff;
-            text-shadow: 5px 5px 0px #ff0000, -2px -2px 0px #000;
-            z-index: 2;
+        #game-screen {
+            width: 240px;
+            height: 160px;
+            background: var(--screen-bg);
+            position: relative;
         }
-        .cell-desc {
+        /* 原地踏步背景 */
+        #scrolling-bg {
             position: absolute;
-            bottom: 15px;
-            background: rgba(255, 255, 255, 0.9);
-            color: #000;
-            padding: 4px 12px;
-            font-weight: bold;
-            border-radius: 20px;
-            font-size: 18px;
+            width: 500px;
+            height: 100%;
+            background-image: linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px);
+            background-size: 40px 100%;
+            left: -40px;
         }
-        .status-idle { background: #ffeb3b; border: 2px solid #f57f17; } /* 靜止亮黃色 */
-        .status-start { background: #4caf50; color: white; border: 2px solid #1b5e20; } /* 起步綠色 */
-
-        .info-panel {
-            margin-top: 20px;
-            background: #333;
-            padding: 25px;
-            border-radius: 12px;
-            width: 800px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        /* 白六精靈 */
+        #dog-sprite {
+            width: var(--sprite-w);
+            height: var(--sprite-h);
+            background-image: url('image_8.png');
+            background-repeat: no-repeat;
+            /* 預設靜止：編號 6 (索引 5) */
+            background-position: -666px -350px;
+            image-rendering: pixelated;
+            position: absolute;
+            left: 50%;
+            margin-left: calc(var(--sprite-w) / -2);
+            bottom: 25px;
+            transform: scale(0.2);
+            transform-origin: bottom center;
+            transition: bottom 0.1s ease-out;
         }
-        .sequence-list {
-            display: flex;
-            gap: 15px;
-            margin-top: 10px;
-        }
-        .seq-box {
-            background: #444;
-            padding: 10px 20px;
-            border-radius: 5px;
-            border-left: 5px solid #ff0000;
-        }
+        /* 控制器樣式 */
+        .controls { width: 100%; display: flex; justify-content: space-between; margin-top: 30px; padding: 0 10px; }
+        .d-pad { display: grid; grid-template-columns: 45px 45px 45px; grid-template-rows: 45px 45px 45px; }
+        .btn { background: #333; color: #555; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px #000; }
+        .btn:active { transform: translateY(2px); box-shadow: 0 2px #000; background: #222; }
+        .up { grid-column: 2; grid-row: 1; border-radius: 5px 5px 0 0; }
+        .left { grid-column: 1; grid-row: 2; border-radius: 5px 0 0 5px; }
+        .right { grid-column: 3; grid-row: 2; border-radius: 0 5px 5px 0; }
+        .down { grid-column: 2; grid-row: 3; border-radius: 0 0 5px 5px; }
+        .action-btns { display: flex; gap: 15px; transform: rotate(-15deg); margin-top: 20px; }
+        .round-btn { width: 55px; height: 55px; background: #8e1e3b; border-radius: 50%; box-shadow: 0 5px #5e1327; color: rgba(255,255,255,0.2); font-weight: bold; }
+        .label { font-size: 10px; color: #555; text-align: center; margin-top: 5px; }
     </style>
 </head>
 <body>
 
-    <h1>白六精靈圖 (image_8.png) 動作編號驗證</h1>
+<div class="gba-body">
+    <div style="font-size: 9px; color: #555; margin-bottom: 5px; font-weight: bold;">DOT MATRIX WITH STEREO SOUND</div>
+    <div class="screen-bezel">
+        <div id="game-screen">
+            <div id="scrolling-bg"></div>
+            <div id="dog-sprite"></div>
+        </div>
+    </div>
+    <div class="controls">
+        <div class="d-pad">
+            <button class="btn up">▲</button>
+            <button class="btn left" ontouchstart="handleInput('ArrowLeft', true)" onmousedown="handleInput('ArrowLeft', true)">◀</button>
+            <button class="btn right" ontouchstart="handleInput('ArrowRight', true)" onmousedown="handleInput('ArrowRight', true)">▶</button>
+            <button class="btn down">▼</button>
+        </div>
+        <div class="action-btns">
+            <div>
+                <button class="btn round-btn">B</button>
+                <div class="label">RUN</div>
+            </div>
+            <div>
+                <button class="btn round-btn" ontouchstart="jump()">A</button>
+                <div class="label">JUMP</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const dog = document.getElementById('dog-sprite');
+    const bg = document.getElementById('scrolling-bg');
     
-    <div class="container">
-        <div class="grid-overlay">
-            <div class="cell" data-label="1"><div class="cell-desc status-start">起步圖</div></div>
-            <div class="cell" data-label="2"><div class="cell-desc">行走 2</div></div>
-            <div class="cell" data-label="3"><div class="cell-desc">行走 3</div></div>
-            <div class="cell" data-label="4"><div class="cell-desc">行走 4</div></div>
-            <div class="cell" data-label="5"><div class="cell-desc">行走 5</div></div>
-            <div class="cell" data-label="6"><div class="cell-desc status-idle">靜止圖</div></div>
-        </div>
-    </div>
+    // 根據指示定義的座標序列
+    // 編號 1-5 為走路圖，編號 6 為靜止圖
+    const walkFrames = [
+        [0, 0], // 編號 1 (上左)
+        [1, 0], // 編號 2 (上中)
+        [2, 0], // 編號 3 (上右)
+        [0, 1], // 編號 4 (下左)
+        [1, 1]  // 編號 2 (下中)
+    ];
+    const idleFrame = [2, 1]; // 編號 6 (下右)
 
-    <div class="info-panel">
-        <h3>✅ 修正後的邏輯設定：</h3>
-        <p>當你在開發主程式 HTML 時，請依照此標號進行 JavaScript 陣列設定：</p>
-        <div class="sequence-list">
-            <div class="seq-box"><strong>靜止 (Idle):</strong> 編號 6</div>
-            <div class="seq-box"><strong>行走循環 (Walk):</strong> 1 → 2 → 3 → 4 → 5</div>
-        </div>
-        <p style="margin-top: 20px; color: #aaa; font-size: 14px;">
-            ※ 每一格尺寸固定為：寬 333px / 高 350px。<br>
-            ※ 若編號 6 確實位於下排右側，則背景位移座標應為 <code>x: -666px, y: -350px</code>。
-        </p>
-    </div>
+    let isMoving = false;
+    let walkIdx = 0;
+    let animTimer = null;
+    let facing = 1;
+    let bgOffset = 0;
 
+    function setSpriteFrame(frameCoords) {
+        dog.style.backgroundPosition = `-${frameCoords[0] * 333}px -${frameCoords[1] * 350}px`;
+    }
+
+    function handleInput(dir, pressed) {
+        if (pressed) {
+            isMoving = true;
+            facing = (dir === 'ArrowLeft') ? -1 : 1;
+            dog.style.transform = `scale(0.2) scaleX(${facing})`;
+            
+            if (!animTimer) {
+                animTimer = setInterval(() => {
+                    walkIdx = (walkIdx + 1) % walkFrames.length;
+                    setSpriteFrame(walkFrames[walkIdx]);
+                }, 110);
+            }
+        } else {
+            isMoving = false;
+            clearInterval(animTimer);
+            animTimer = null;
+            walkIdx = 0;
+            setSpriteFrame(idleFrame); // 回到編號 6
+        }
+    }
+
+    function jump() {
+        dog.style.bottom = "85px";
+        setTimeout(() => { dog.style.bottom = "25px"; }, 250);
+    }
+
+    function update() {
+        if (isMoving) {
+            bgOffset -= facing * 2.5;
+            bg.style.transform = `translateX(${bgOffset % 40}px)`;
+        }
+        requestAnimationFrame(update);
+    }
+
+    const stop = () => handleInput('', false);
+    window.addEventListener('mouseup', stop);
+    window.addEventListener('touchend', stop);
+    
+    update();
+</script>
 </body>
 </html>
