@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>𓃥白六世界時鐘</title>
+    <title>𓃥白六世界時鐘 - 終極修正版</title>
     <style>
         :root {
             --gba-color: #8b8b8b;
             --screen-bg: #9bbc0f; 
-            /* 單格精確尺寸 */
-            --sprite-w: 333px; 
+            /* 單格原始解析度對齊 */
+            --sprite-w: 333.33px; 
             --sprite-h: 350px; 
         }
         body {
@@ -52,8 +52,8 @@
             height: 160px;
             background: var(--screen-bg);
             position: relative;
+            overflow: hidden;
         }
-        /* 原地踏步背景 */
         #scrolling-bg {
             position: absolute;
             width: 500px;
@@ -62,24 +62,24 @@
             background-size: 40px 100%;
             left: -40px;
         }
-        /* 白六精靈 */
+        /* 核心修正：使用精確百分比避免像素誤差 */
         #dog-sprite {
-            width: var(--sprite-w);
-            height: var(--sprite-h);
+            width: 333px; 
+            height: 350px;
             background-image: url('image_8.png');
             background-repeat: no-repeat;
-            /* 預設靜止：編號 6 (索引 5) */
-            background-position: -666px -350px;
+            /* 預設靜止：編號 6 (下右圖，索引 5) */
+            background-position: -666.66px -350px;
             image-rendering: pixelated;
             position: absolute;
             left: 50%;
-            margin-left: calc(var(--sprite-w) / -2);
-            bottom: 25px;
-            transform: scale(0.2);
+            margin-left: -166.5px;
+            bottom: 20px;
+            /* 縮放為 0.18 倍以完美適配畫面 */
+            transform: scale(0.18);
             transform-origin: bottom center;
             transition: bottom 0.1s ease-out;
         }
-        /* 控制器樣式 */
         .controls { width: 100%; display: flex; justify-content: space-between; margin-top: 30px; padding: 0 10px; }
         .d-pad { display: grid; grid-template-columns: 45px 45px 45px; grid-template-rows: 45px 45px 45px; }
         .btn { background: #333; color: #555; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px #000; }
@@ -89,14 +89,12 @@
         .right { grid-column: 3; grid-row: 2; border-radius: 0 5px 5px 0; }
         .down { grid-column: 2; grid-row: 3; border-radius: 0 0 5px 5px; }
         .action-btns { display: flex; gap: 15px; transform: rotate(-15deg); margin-top: 20px; }
-        .round-btn { width: 55px; height: 55px; background: #8e1e3b; border-radius: 50%; box-shadow: 0 5px #5e1327; color: rgba(255,255,255,0.2); font-weight: bold; }
-        .label { font-size: 10px; color: #555; text-align: center; margin-top: 5px; }
+        .round-btn { width: 55px; height: 55px; background: #8e1e3b; border-radius: 50%; box-shadow: 0 5px #5e1327; color: white; font-weight: bold; font-size: 14px; }
     </style>
 </head>
 <body>
 
 <div class="gba-body">
-    <div style="font-size: 9px; color: #555; margin-bottom: 5px; font-weight: bold;">DOT MATRIX WITH STEREO SOUND</div>
     <div class="screen-bezel">
         <div id="game-screen">
             <div id="scrolling-bg"></div>
@@ -106,19 +104,13 @@
     <div class="controls">
         <div class="d-pad">
             <button class="btn up">▲</button>
-            <button class="btn left" ontouchstart="handleInput('ArrowLeft', true)" onmousedown="handleInput('ArrowLeft', true)">◀</button>
-            <button class="btn right" ontouchstart="handleInput('ArrowRight', true)" onmousedown="handleInput('ArrowRight', true)">▶</button>
+            <button class="btn left" ontouchstart="handleMove('ArrowLeft', true)" onmousedown="handleMove('ArrowLeft', true)">◀</button>
+            <button class="btn right" ontouchstart="handleMove('ArrowRight', true)" onmousedown="handleMove('ArrowRight', true)">▶</button>
             <button class="btn down">▼</button>
         </div>
         <div class="action-btns">
-            <div>
-                <button class="btn round-btn">B</button>
-                <div class="label">RUN</div>
-            </div>
-            <div>
-                <button class="btn round-btn" ontouchstart="jump()">A</button>
-                <div class="label">JUMP</div>
-            </div>
+            <button class="btn round-btn">B</button>
+            <button class="btn round-btn" ontouchstart="jump()">A</button>
         </div>
     </div>
 </div>
@@ -127,66 +119,65 @@
     const dog = document.getElementById('dog-sprite');
     const bg = document.getElementById('scrolling-bg');
     
-    // 根據指示定義的座標序列
-    // 編號 1-5 為走路圖，編號 6 為靜止圖
+    // 嚴格定義座標序列 (1-6)
     const walkFrames = [
         [0, 0], // 編號 1 (上左)
         [1, 0], // 編號 2 (上中)
         [2, 0], // 編號 3 (上右)
         [0, 1], // 編號 4 (下左)
-        [1, 1]  // 編號 2 (下中)
+        [1, 1]  // 編號 5 (下中)
     ];
     const idleFrame = [2, 1]; // 編號 6 (下右)
 
     let isMoving = false;
-    let walkIdx = 0;
+    let frameIdx = 0;
     let animTimer = null;
     let facing = 1;
-    let bgOffset = 0;
+    let bgPos = 0;
 
-    function setSpriteFrame(frameCoords) {
-        dog.style.backgroundPosition = `-${frameCoords[0] * 333}px -${frameCoords[1] * 350}px`;
+    function setSprite(coords) {
+        // 使用 333.33 解決精靈圖邊緣溢出問題
+        dog.style.backgroundPosition = `-${coords[0] * 333.33}px -${coords[1] * 350}px`;
     }
 
-    function handleInput(dir, pressed) {
+    function handleMove(dir, pressed) {
         if (pressed) {
             isMoving = true;
             facing = (dir === 'ArrowLeft') ? -1 : 1;
-            dog.style.transform = `scale(0.2) scaleX(${facing})`;
-            
+            dog.style.transform = `scale(0.18) scaleX(${facing})`;
             if (!animTimer) {
                 animTimer = setInterval(() => {
-                    walkIdx = (walkIdx + 1) % walkFrames.length;
-                    setSpriteFrame(walkFrames[walkIdx]);
-                }, 110);
+                    frameIdx = (frameIdx + 1) % walkFrames.length;
+                    setSprite(walkFrames[frameIdx]);
+                }, 115);
             }
         } else {
             isMoving = false;
             clearInterval(animTimer);
             animTimer = null;
-            walkIdx = 0;
-            setSpriteFrame(idleFrame); // 回到編號 6
+            frameIdx = 0;
+            setSprite(idleFrame);
         }
     }
 
     function jump() {
-        dog.style.bottom = "85px";
-        setTimeout(() => { dog.style.bottom = "25px"; }, 250);
+        dog.style.bottom = "80px";
+        setTimeout(() => { dog.style.bottom = "20px"; }, 250);
     }
 
-    function update() {
+    function loop() {
         if (isMoving) {
-            bgOffset -= facing * 2.5;
-            bg.style.transform = `translateX(${bgOffset % 40}px)`;
+            bgPos -= facing * 2.5;
+            bg.style.transform = `translateX(${bgPos % 40}px)`;
         }
-        requestAnimationFrame(update);
+        requestAnimationFrame(loop);
     }
 
-    const stop = () => handleInput('', false);
+    const stop = () => handleMove('', false);
     window.addEventListener('mouseup', stop);
     window.addEventListener('touchend', stop);
     
-    update();
+    loop();
 </script>
 </body>
 </html>
