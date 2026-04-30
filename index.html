@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>𓃥白六世界時鐘 - 傳情版</title>
+    <title>𓃥白六傳情 - 雙向動態版</title>
     <style>
         :root {
             --gba-color: #8b8b8b;
@@ -17,7 +17,6 @@
             font-family: 'PingFang TC', sans-serif; touch-action: manipulation; -webkit-user-select: none;
         }
 
-        /* Game Boy 主體 */
         .gba-body {
             width: 320px; height: 580px;
             background: var(--gba-color);
@@ -27,7 +26,6 @@
             box-shadow: inset -5px -5px 15px rgba(0,0,0,0.4), 15px 15px 30px rgba(0,0,0,0.6);
         }
 
-        /* 螢幕區域 */
         .screen-bezel {
             width: 280px; height: 200px;
             background: #333; border-radius: 5px;
@@ -39,21 +37,20 @@
             background: var(--screen-bg); position: relative; overflow: hidden;
         }
 
-        /* 背景大字訊息 */
+        /* 訊息文字層：高度幾乎佔滿畫面 */
         #msg-display {
             position: absolute;
             white-space: nowrap;
-            font-size: 140px; /* 字高接近螢幕高度 */
+            font-size: 150px; 
             font-weight: 900;
-            color: rgba(0, 0, 0, 0.1);
+            color: rgba(0, 0, 0, 0.12);
             top: 50%;
             transform: translateY(-50%);
-            left: 240px; 
+            left: 240px; /* 初始在右側 */
             pointer-events: none;
             line-height: 1;
         }
 
-        /* 白六精靈容器 */
         #sprite-container {
             width: var(--w); height: var(--h);
             position: absolute; left: 50%; bottom: 5px;
@@ -66,44 +63,42 @@
             background-image: url('image_8.png');
             background-repeat: no-repeat;
             background-size: 999px 700px;
-            background-position: -666px -350px; /* 靜止編號 6 */
+            background-position: -666px -350px; 
             image-rendering: pixelated;
         }
 
-        /* 控制器 */
+        /* 十字鍵排列 */
         .controls { width: 100%; display: flex; justify-content: space-between; margin-top: 25px; padding: 0 10px; }
-        .d-pad { display: grid; grid-template-columns: repeat(3, 40px); grid-template-rows: repeat(3, 40px); }
-        .btn { background: #333; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px #000; }
+        .d-pad { display: grid; grid-template-columns: repeat(3, 42px); grid-template-rows: repeat(3, 42px); }
+        .btn { background: #333; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px #000; transition: 0.1s; }
         .btn:active { transform: translateY(2px); box-shadow: 0 2px #000; background: #222; }
-        .right { grid-column: 3; grid-row: 2; border-radius: 0 5px 5px 0; }
+        
+        .up { grid-column: 2; grid-row: 1; border-radius: 4px 4px 0 0; opacity: 0.6; }
+        .left { grid-column: 1; grid-row: 2; border-radius: 4px 0 0 4px; background: #444; color: #fff; }
+        .right { grid-column: 3; grid-row: 2; border-radius: 0 4px 4px 0; background: #444; color: #fff; }
+        .down { grid-column: 2; grid-row: 3; border-radius: 0 0 4px 4px; opacity: 0.6; }
+
         .action-btns { display: flex; gap: 15px; transform: rotate(-15deg); margin-top: 10px; }
-        .round-btn { width: 50px; height: 50px; background: #8e1e3b; border-radius: 50%; color: rgba(255,255,255,0.3); font-weight: bold; font-size: 12px; }
+        .round-btn { width: 50px; height: 50px; background: #8e1e3b; border-radius: 50%; color: rgba(255,255,255,0.2); font-weight: bold; }
 
-        /* Start / Select 按鈕 */
         .system-btns { display: flex; gap: 20px; margin-top: 40px; transform: rotate(-15deg); }
-        .pill-btn { width: 45px; height: 12px; background: #555; border-radius: 10px; box-shadow: 0 3px #222; cursor: pointer; }
-        .pill-btn:active { transform: translateY(1px); box-shadow: 0 1px #222; }
+        .pill-btn { width: 45px; height: 12px; background: #555; border-radius: 10px; box-shadow: 0 3px #222; }
 
-        /* 下方輸入介面 */
+        /* 輸入介面 */
         .messenger-ui {
             margin-top: 20px; width: 320px; background: #2a2a2a; padding: 15px; border-radius: 12px;
-            display: flex; flex-direction: column; gap: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            display: flex; flex-direction: column; gap: 10px;
         }
-        #msg-input {
-            background: #111; border: 1px solid #444; color: #9bbc0f; padding: 10px; border-radius: 6px; outline: none; font-size: 16px;
-        }
-        #copy-btn {
-            background: #8e1e3b; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold;
-        }
+        #msg-input { background: #111; border: 1px solid #444; color: #9bbc0f; padding: 10px; border-radius: 6px; outline: none; }
+        #copy-btn { background: #8e1e3b; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="gba-body">
-    <div style="font-size: 10px; color: #444; font-weight: bold; margin-bottom: 5px;">DOT MATRIX WITH STEREO SOUND</div>
     <div class="screen-bezel">
         <div id="game-screen">
-            <div id="msg-display">請輸入訊息</div>
+            <div id="msg-display">白六傳話</div>
             <div id="sprite-container">
                 <div id="dog-sprite"></div>
             </div>
@@ -113,8 +108,8 @@
     <div class="controls">
         <div class="d-pad">
             <button class="btn up"></button>
-            <button class="btn left"></button>
-            <button class="btn right" ontouchstart="move(true)" onmousedown="move(true)">▶</button>
+            <button class="btn left" ontouchstart="move('L', true)" onmousedown="move('L', true)">◀</button>
+            <button class="btn right" ontouchstart="move('R', true)" onmousedown="move('R', true)">▶</button>
             <button class="btn down"></button>
         </div>
         <div class="action-btns">
@@ -130,8 +125,8 @@
 </div>
 
 <div class="messenger-ui" id="ui-panel">
-    <input type="text" id="msg-input" placeholder="想對他/她說什麼？" maxlength="30">
-    <button id="copy-btn" onclick="generateLink()">產生並複製分享連結</button>
+    <input type="text" id="msg-input" placeholder="寫點什麼..." maxlength="30">
+    <button id="copy-btn" onclick="generateLink()">產生並複製連結</button>
 </div>
 
 <script>
@@ -146,16 +141,16 @@
 
     let isMoving = false, walkIdx = 0, animTimer = null;
     let textPos = 240; 
+    let currentDir = 'R';
     let message = "";
 
-    // 1. 檢查 URL 是否有帶訊息參數
     const urlParams = new URLSearchParams(window.location.search);
     const sharedMsg = urlParams.get('msg');
 
     if (sharedMsg) {
         message = decodeURIComponent(sharedMsg);
         msgDisplay.innerText = message;
-        uiPanel.style.display = "none"; // 收訊者不看輸入欄
+        uiPanel.style.display = "none";
     }
 
     function setFrame(coords) {
@@ -167,32 +162,39 @@
         if (!text) return alert("請輸入內容");
         const baseUrl = window.location.href.split('?')[0];
         const finalUrl = `${baseUrl}?msg=${encodeURIComponent(text)}`;
-        
-        navigator.clipboard.writeText(finalUrl).then(() => {
-            alert("連結已複製！傳送給朋友，讓白六幫你傳話吧。");
-        });
-        
-        // 即時預覽
+        navigator.clipboard.writeText(finalUrl).then(() => alert("連結已複製！"));
         message = text;
         msgDisplay.innerText = message;
         textPos = 240;
         msgDisplay.style.left = textPos + "px";
     }
 
-    function move(pressed) {
-        if (!message) return; // 沒訊息不給走
+    function move(dir, pressed) {
+        if (!message) return;
         if (pressed) {
             isMoving = true;
+            currentDir = dir;
+            const facing = (dir === 'L') ? -1 : 1;
+            container.style.transform = `scale(0.18) scaleX(${facing})`;
+            
             if (!animTimer) {
                 animTimer = setInterval(() => {
                     walkIdx = (walkIdx + 1) % walkFrames.length;
                     setFrame(walkFrames[walkIdx]);
                     
-                    textPos -= 10; // 文字移動速度
-                    msgDisplay.style.left = textPos + "px";
+                    // 核心邏輯：向右走文字向左移，向左走文字向右移
+                    if (currentDir === 'R') {
+                        textPos -= 10;
+                    } else {
+                        textPos += 10;
+                    }
                     
-                    // 循環播放
-                    if (textPos < -msgDisplay.offsetWidth) textPos = 240;
+                    // 邊界循環
+                    const textWidth = msgDisplay.offsetWidth;
+                    if (textPos < -textWidth) textPos = 240;
+                    if (textPos > 240) textPos = -textWidth;
+                    
+                    msgDisplay.style.left = textPos + "px";
                 }, 100);
             }
         } else {
@@ -205,12 +207,10 @@
     function jump() {
         container.style.transition = "bottom 0.2s ease-out";
         container.style.bottom = "70px";
-        setTimeout(() => {
-            container.style.bottom = "5px";
-        }, 200);
+        setTimeout(() => container.style.bottom = "5px", 200);
     }
 
-    const stop = () => move(false);
+    const stop = () => move(currentDir, false);
     window.addEventListener('mouseup', stop);
     window.addEventListener('touchend', stop);
 </script>
