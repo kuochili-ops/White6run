@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>𓃥白六傳情 - 十字鍵優化</title>
+    <title>𓃥白六傳情 - 音樂修復版</title>
     <style>
         :root {
             --gba-color: #8b8b8b;
@@ -16,7 +16,6 @@
             min-height: 100vh; margin: 0; padding: 10px;
             font-family: 'PingFang TC', sans-serif; touch-action: manipulation; -webkit-user-select: none;
         }
-
         .gba-body {
             width: 310px; height: 560px;
             background: var(--gba-color);
@@ -25,7 +24,6 @@
             padding: 15px; position: relative;
             box-shadow: inset -5px -5px 15px rgba(0,0,0,0.4), 15px 15px 30px rgba(0,0,0,0.6);
         }
-
         .screen-bezel {
             width: 270px; height: 190px;
             background: #333; border-radius: 5px;
@@ -36,65 +34,36 @@
             width: 230px; height: 150px;
             background: var(--screen-bg); position: relative; overflow: hidden;
         }
-
         #msg-display {
-            position: absolute;
-            white-space: nowrap;
-            font-size: 150px; font-weight: 900;
-            color: rgba(0, 0, 0, 0.12);
-            top: 50%; transform: translateY(-50%);
+            position: absolute; white-space: nowrap; font-size: 150px; font-weight: 900;
+            color: rgba(0, 0, 0, 0.12); top: 50%; transform: translateY(-50%);
             left: 230px; pointer-events: none; line-height: 1;
         }
-
         #sprite-container {
-            width: var(--w); height: var(--h);
-            position: absolute; left: 50%; bottom: 5px;
-            margin-left: calc(var(--w) / -2);
-            transform: scale(0.18); transform-origin: bottom center;
+            width: var(--w); height: var(--h); position: absolute; left: 50%; bottom: 5px;
+            margin-left: calc(var(--w) / -2); transform: scale(0.18); transform-origin: bottom center;
             overflow: hidden; z-index: 10;
         }
         #dog-sprite {
-            width: 100%; height: 100%;
-            background-image: url('image_8.png');
-            background-repeat: no-repeat;
-            background-size: 999px 700px;
-            background-position: -666px -350px; 
-            image-rendering: pixelated;
+            width: 100%; height: 100%; background-image: url('image_8.png');
+            background-repeat: no-repeat; background-size: 999px 700px;
+            background-position: -666px -350px; image-rendering: pixelated;
         }
-
-        /* ⚠️ 十字鍵核心佈局修正 */
         .controls { width: 100%; display: flex; justify-content: space-between; margin-top: 30px; padding: 0 10px; }
-        .d-pad { 
-            display: grid; 
-            grid-template-columns: 40px 40px 40px; 
-            grid-template-rows: 40px 40px 40px; 
-            filter: drop-shadow(0 4px 0 #000);
-        }
+        .d-pad { display: grid; grid-template-columns: 40px 40px 40px; grid-template-rows: 40px 40px 40px; filter: drop-shadow(0 4px 0 #000); }
         .btn { background: #333; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; position: relative; }
         .btn:active { background: #222; }
-        
-        /* 十字鍵美化：透過圓角營造經典外型 */
         .up { grid-column: 2; grid-row: 1; border-radius: 6px 6px 0 0; }
         .left { grid-column: 1; grid-row: 2; border-radius: 6px 0 0 6px; color: #fff; }
         .right { grid-column: 3; grid-row: 2; border-radius: 0 6px 6px 0; color: #fff; }
         .down { grid-column: 2; grid-row: 3; border-radius: 0 0 6px 6px; }
-        
-        /* 十字鍵中心點補全 */
-        .d-pad::after {
-            content: ""; grid-column: 2; grid-row: 2; background: #333;
-        }
-
+        .d-pad::after { content: ""; grid-column: 2; grid-row: 2; background: #333; }
         .action-btns { display: flex; gap: 12px; transform: rotate(-15deg); margin-top: 15px; }
         .round-btn { width: 50px; height: 50px; background: #8e1e3b; border-radius: 50%; box-shadow: 0 4px 0 #000; color: rgba(255,255,255,0.2); font-weight: bold; }
         .round-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #000; }
-
         .system-btns { display: flex; gap: 20px; margin-top: 40px; transform: rotate(-15deg); }
         .pill-btn { width: 45px; height: 12px; background: #555; border-radius: 10px; box-shadow: 0 3px #222; }
-
-        .messenger-ui {
-            margin-top: 20px; width: 310px; background: #2a2a2a; padding: 15px; border-radius: 15px;
-            display: flex; flex-direction: column; gap: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-        }
+        .messenger-ui { margin-top: 20px; width: 310px; background: #2a2a2a; padding: 15px; border-radius: 15px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         #msg-input { background: #111; border: 1px solid #444; color: #9bbc0f; padding: 10px; border-radius: 8px; outline: none; }
         #copy-btn { background: #8e1e3b; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; }
     </style>
@@ -102,41 +71,38 @@
 <body>
 
 <div class="gba-body">
-    <div style="font-size: 10px; color: #555; font-weight: bold; margin-bottom: 5px;">DOT MATRIX WITH STEREO SOUND</div>
     <div class="screen-bezel">
         <div id="game-screen">
-            <div id="msg-display">白六與你同行</div>
+            <div id="msg-display">點擊畫面開啟音樂</div>
             <div id="sprite-container">
                 <div id="dog-sprite"></div>
             </div>
         </div>
     </div>
-    
     <div class="controls">
         <div class="d-pad">
-            <button class="btn up" onmousedown="tryPlayMusic()"></button>
+            <button class="btn up" onclick="tryPlayMusic()"></button>
             <button class="btn left" ontouchstart="move('L', true)" onmousedown="move('L', true)">◀</button>
             <button class="btn right" ontouchstart="move('R', true)" onmousedown="move('R', true)">▶</button>
-            <button class="btn down" onmousedown="tryPlayMusic()"></button>
+            <button class="btn down" onclick="tryPlayMusic()"></button>
         </div>
         <div class="action-btns">
             <button class="btn round-btn" ontouchstart="jump()" onmousedown="tryPlayMusic()">A</button>
-            <button class="btn round-btn" onmousedown="tryPlayMusic()">B</button>
+            <button class="btn round-btn" onclick="tryPlayMusic()">B</button>
         </div>
     </div>
-
     <div class="system-btns">
-        <div style="text-align:center"><div class="pill-btn"></div><div style="font-size:8px; color:#333; font-weight:bold; margin-top:3px">SELECT</div></div>
-        <div style="text-align:center"><div class="pill-btn"></div><div style="font-size:8px; color:#333; font-weight:bold; margin-top:3px">START</div></div>
+        <div class="pill-btn" onclick="tryPlayMusic()"></div>
+        <div class="pill-btn" onclick="tryPlayMusic()"></div>
     </div>
 </div>
 
 <div class="messenger-ui" id="ui-panel">
-    <input type="text" id="msg-input" placeholder="輸入你想說的話..." maxlength="30">
-    <button id="copy-btn" onclick="generateLink()">🚀 產生並複製分享連結</button>
+    <input type="text" id="msg-input" placeholder="寫點什麼..." maxlength="30">
+    <button id="copy-btn" onclick="generateLink()">🚀 產生連結並開啟音樂</button>
 </div>
 
-<audio id="bg-music" loop>
+<audio id="bg-music" loop preload="auto">
     <source src="Morning_sprite_walk.mp3" type="audio/mpeg">
 </audio>
 
@@ -154,13 +120,18 @@
     let isMoving = false, walkIdx = 0, animTimer = null;
     let textPos = 230; 
     let currentDir = 'R';
-    let message = "白六與你同行";
+    let message = "點擊畫面開啟音樂";
     let musicStarted = false;
+
+    // 全域點擊啟動
+    document.body.addEventListener('touchstart', tryPlayMusic, { once: true });
+    document.body.addEventListener('click', tryPlayMusic, { once: true });
 
     function tryPlayMusic() {
         if (!musicStarted) {
-            bgMusic.play().catch(e => console.log("音樂啟動受限"));
-            musicStarted = true;
+            bgMusic.play().then(() => {
+                musicStarted = true;
+            }).catch(e => console.log("等待手勢..."));
         }
     }
 
@@ -182,15 +153,13 @@
         tryPlayMusic();
         const baseUrl = window.location.origin + window.location.pathname;
         const finalUrl = `${baseUrl}?msg=${encodeURIComponent(text)}`;
-        navigator.clipboard.writeText(finalUrl).then(() => alert("連結已複製！"));
+        navigator.clipboard.writeText(finalUrl).then(() => alert("連結已複製且音樂已啟動！"));
         message = text;
         msgDisplay.innerText = message;
         textPos = 230;
-        msgDisplay.style.left = textPos + "px";
     }
 
     function move(dir, pressed) {
-        if (!message) return;
         tryPlayMusic();
         if (pressed) {
             isMoving = true;
