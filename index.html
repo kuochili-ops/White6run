@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>𓃥白六世界時鐘 - 訊息推動版</title>
+    <title>𓃥白六世界時鐘 - 傳情版</title>
     <style>
         :root {
             --gba-color: #8b8b8b;
@@ -13,43 +13,50 @@
         body {
             background-color: #1a1a1a;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            min-height: 100vh; margin: 0; overflow-x: hidden;
-            font-family: sans-serif; touch-action: manipulation; -webkit-user-select: none;
+            min-height: 100vh; margin: 0; overflow: hidden;
+            font-family: 'PingFang TC', sans-serif; touch-action: manipulation; -webkit-user-select: none;
         }
+
         /* Game Boy 主體 */
         .gba-body {
-            width: 320px; height: 520px;
+            width: 320px; height: 580px;
             background: var(--gba-color);
             border-radius: 15px 15px 80px 15px;
             display: flex; flex-direction: column; align-items: center;
             padding: 20px; position: relative;
             box-shadow: inset -5px -5px 15px rgba(0,0,0,0.4), 15px 15px 30px rgba(0,0,0,0.6);
         }
+
+        /* 螢幕區域 */
         .screen-bezel {
-            width: 280px; height: 180px;
+            width: 280px; height: 200px;
             background: #333; border-radius: 5px;
             display: flex; justify-content: center; align-items: center;
-            border: 4px solid #111; overflow: hidden;
+            border: 4px solid #111; overflow: hidden; margin-top: 10px;
         }
         #game-screen {
-            width: 240px; height: 140px;
+            width: 240px; height: 160px;
             background: var(--screen-bg); position: relative; overflow: hidden;
         }
-        /* 訊息文字層：初始位置在螢幕右側邊界外 */
+
+        /* 背景大字訊息 */
         #msg-display {
             position: absolute;
             white-space: nowrap;
-            font-size: 60px;
+            font-size: 140px; /* 字高接近螢幕高度 */
             font-weight: 900;
-            color: rgba(0, 0, 0, 0.15);
+            color: rgba(0, 0, 0, 0.1);
             top: 50%;
             transform: translateY(-50%);
             left: 240px; 
             pointer-events: none;
+            line-height: 1;
         }
+
+        /* 白六精靈容器 */
         #sprite-container {
             width: var(--w); height: var(--h);
-            position: absolute; left: 50%; bottom: 10px;
+            position: absolute; left: 50%; bottom: 5px;
             margin-left: calc(var(--w) / -2);
             transform: scale(0.18); transform-origin: bottom center;
             overflow: hidden; z-index: 10;
@@ -62,60 +69,69 @@
             background-position: -666px -350px; /* 靜止編號 6 */
             image-rendering: pixelated;
         }
-        /* 控制器與訊息欄 */
-        .controls { width: 100%; display: flex; justify-content: space-between; margin-top: 20px; }
-        .d-pad { display: grid; grid-template-columns: repeat(3, 40px); grid-template-rows: repeat(3, 40px); }
-        .btn { background: #333; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px #000; color: #555; }
-        .btn:active { transform: translateY(2px); box-shadow: 0 2px #000; background: #222; }
-        .right { grid-column: 3; grid-row: 2; border-radius: 0 5px 5px 0; background: #444; color: #fff; }
-        .action-btns { display: flex; gap: 10px; transform: rotate(-15deg); }
-        .round-btn { width: 45px; height: 45px; background: #8e1e3b; border-radius: 50%; }
 
-        /* 訊息輸入介面 */
+        /* 控制器 */
+        .controls { width: 100%; display: flex; justify-content: space-between; margin-top: 25px; padding: 0 10px; }
+        .d-pad { display: grid; grid-template-columns: repeat(3, 40px); grid-template-rows: repeat(3, 40px); }
+        .btn { background: #333; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px #000; }
+        .btn:active { transform: translateY(2px); box-shadow: 0 2px #000; background: #222; }
+        .right { grid-column: 3; grid-row: 2; border-radius: 0 5px 5px 0; }
+        .action-btns { display: flex; gap: 15px; transform: rotate(-15deg); margin-top: 10px; }
+        .round-btn { width: 50px; height: 50px; background: #8e1e3b; border-radius: 50%; color: rgba(255,255,255,0.3); font-weight: bold; font-size: 12px; }
+
+        /* Start / Select 按鈕 */
+        .system-btns { display: flex; gap: 20px; margin-top: 40px; transform: rotate(-15deg); }
+        .pill-btn { width: 45px; height: 12px; background: #555; border-radius: 10px; box-shadow: 0 3px #222; cursor: pointer; }
+        .pill-btn:active { transform: translateY(1px); box-shadow: 0 1px #222; }
+
+        /* 下方輸入介面 */
         .messenger-ui {
-            margin-top: 30px; width: 320px;
-            background: #2a2a2a; padding: 15px; border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            display: flex; gap: 10px;
+            margin-top: 20px; width: 320px; background: #2a2a2a; padding: 15px; border-radius: 12px;
+            display: flex; flex-direction: column; gap: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
         #msg-input {
-            flex: 1; background: #111; border: 1px solid #444;
-            color: #9bbc0f; padding: 8px; border-radius: 5px; outline: none;
+            background: #111; border: 1px solid #444; color: #9bbc0f; padding: 10px; border-radius: 6px; outline: none; font-size: 16px;
         }
-        #send-btn {
-            background: #8e1e3b; color: white; border: none;
-            padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold;
+        #copy-btn {
+            background: #8e1e3b; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold;
         }
     </style>
 </head>
 <body>
 
 <div class="gba-body">
+    <div style="font-size: 10px; color: #444; font-weight: bold; margin-bottom: 5px;">DOT MATRIX WITH STEREO SOUND</div>
     <div class="screen-bezel">
         <div id="game-screen">
-            <div id="msg-display"></div>
+            <div id="msg-display">請輸入訊息</div>
             <div id="sprite-container">
                 <div id="dog-sprite"></div>
             </div>
         </div>
     </div>
+    
     <div class="controls">
         <div class="d-pad">
-            <button class="btn up">▲</button>
-            <button class="btn left">◀</button>
+            <button class="btn up"></button>
+            <button class="btn left"></button>
             <button class="btn right" ontouchstart="move(true)" onmousedown="move(true)">▶</button>
-            <button class="btn down">▼</button>
+            <button class="btn down"></button>
         </div>
         <div class="action-btns">
             <button class="btn round-btn" ontouchstart="jump()">A</button>
             <button class="btn round-btn">B</button>
         </div>
     </div>
+
+    <div class="system-btns">
+        <div style="text-align:center"><div class="pill-btn"></div><div style="font-size:9px; color:#333; font-weight:bold; margin-top:5px">SELECT</div></div>
+        <div style="text-align:center"><div class="pill-btn"></div><div style="font-size:9px; color:#333; font-weight:bold; margin-top:5px">START</div></div>
+    </div>
 </div>
 
-<div class="messenger-ui">
-    <input type="text" id="msg-input" placeholder="輸入訊息內容..." maxlength="20">
-    <button id="send-btn" onclick="sendMessage()">發送</button>
+<div class="messenger-ui" id="ui-panel">
+    <input type="text" id="msg-input" placeholder="想對他/她說什麼？" maxlength="30">
+    <button id="copy-btn" onclick="generateLink()">產生並複製分享連結</button>
 </div>
 
 <script>
@@ -123,51 +139,61 @@
     const container = document.getElementById('sprite-container');
     const msgDisplay = document.getElementById('msg-display');
     const msgInput = document.getElementById('msg-input');
+    const uiPanel = document.getElementById('ui-panel');
 
     const walkFrames = [[0,0], [1,0], [2,0], [0,1], [1,1]]; 
     const idleFrame = [2,1];
 
     let isMoving = false, walkIdx = 0, animTimer = null;
-    let textPos = 240; // 初始位置在螢幕右側邊緣
-    let currentMessage = "";
+    let textPos = 240; 
+    let message = "";
+
+    // 1. 檢查 URL 是否有帶訊息參數
+    const urlParams = new URLSearchParams(window.location.search);
+    const sharedMsg = urlParams.get('msg');
+
+    if (sharedMsg) {
+        message = decodeURIComponent(sharedMsg);
+        msgDisplay.innerText = message;
+        uiPanel.style.display = "none"; // 收訊者不看輸入欄
+    }
 
     function setFrame(coords) {
         dog.style.backgroundPosition = `-${coords[0] * 333}px -${coords[1] * 350}px`;
     }
 
-    // 發送訊息邏輯
-    function sendMessage() {
-        if (msgInput.value.trim() === "") return;
-        currentMessage = msgInput.value;
-        msgDisplay.innerText = currentMessage;
+    function generateLink() {
+        const text = msgInput.value.trim();
+        if (!text) return alert("請輸入內容");
+        const baseUrl = window.location.href.split('?')[0];
+        const finalUrl = `${baseUrl}?msg=${encodeURIComponent(text)}`;
         
-        // 重置文字位置與狀態
+        navigator.clipboard.writeText(finalUrl).then(() => {
+            alert("連結已複製！傳送給朋友，讓白六幫你傳話吧。");
+        });
+        
+        // 即時預覽
+        message = text;
+        msgDisplay.innerText = message;
         textPos = 240;
         msgDisplay.style.left = textPos + "px";
-        msgInput.value = "";
-        alert("訊息已發送！請按「向右鍵」讓白六推動訊息文字。");
     }
 
     function move(pressed) {
+        if (!message) return; // 沒訊息不給走
         if (pressed) {
             isMoving = true;
-            container.style.transform = `scale(0.18) scaleX(1)`;
             if (!animTimer) {
                 animTimer = setInterval(() => {
                     walkIdx = (walkIdx + 1) % walkFrames.length;
                     setFrame(walkFrames[walkIdx]);
                     
-                    // 當白六走動時，文字向左移動
-                    if (currentMessage !== "") {
-                        textPos -= 8; // 移動速度
-                        msgDisplay.style.left = textPos + "px";
-                        
-                        // 若文字完全消失在左側，則循環回到右側
-                        if (textPos < -msgDisplay.offsetWidth) {
-                            textPos = 240;
-                        }
-                    }
-                }, 110);
+                    textPos -= 10; // 文字移動速度
+                    msgDisplay.style.left = textPos + "px";
+                    
+                    // 循環播放
+                    if (textPos < -msgDisplay.offsetWidth) textPos = 240;
+                }, 100);
             }
         } else {
             isMoving = false;
@@ -177,14 +203,16 @@
     }
 
     function jump() {
-        container.style.bottom = "60px";
-        setTimeout(() => container.style.bottom = "10px", 250);
+        container.style.transition = "bottom 0.2s ease-out";
+        container.style.bottom = "70px";
+        setTimeout(() => {
+            container.style.bottom = "5px";
+        }, 200);
     }
 
     const stop = () => move(false);
     window.addEventListener('mouseup', stop);
     window.addEventListener('touchend', stop);
 </script>
-
 </body>
 </html>
