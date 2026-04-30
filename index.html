@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>𓃥白六傳情 - 音樂修復版</title>
+    <title>𓃥白六傳情 - 音樂強制解鎖版</title>
     <style>
         :root {
             --gba-color: #8b8b8b;
@@ -49,20 +49,22 @@
             background-repeat: no-repeat; background-size: 999px 700px;
             background-position: -666px -350px; image-rendering: pixelated;
         }
+        /* 十字鍵排列 */
         .controls { width: 100%; display: flex; justify-content: space-between; margin-top: 30px; padding: 0 10px; }
         .d-pad { display: grid; grid-template-columns: 40px 40px 40px; grid-template-rows: 40px 40px 40px; filter: drop-shadow(0 4px 0 #000); }
-        .btn { background: #333; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; position: relative; }
-        .btn:active { background: #222; }
+        .btn { background: #333; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; }
         .up { grid-column: 2; grid-row: 1; border-radius: 6px 6px 0 0; }
         .left { grid-column: 1; grid-row: 2; border-radius: 6px 0 0 6px; color: #fff; }
         .right { grid-column: 3; grid-row: 2; border-radius: 0 6px 6px 0; color: #fff; }
         .down { grid-column: 2; grid-row: 3; border-radius: 0 0 6px 6px; }
         .d-pad::after { content: ""; grid-column: 2; grid-row: 2; background: #333; }
+        
         .action-btns { display: flex; gap: 12px; transform: rotate(-15deg); margin-top: 15px; }
-        .round-btn { width: 50px; height: 50px; background: #8e1e3b; border-radius: 50%; box-shadow: 0 4px 0 #000; color: rgba(255,255,255,0.2); font-weight: bold; }
+        .round-btn { width: 50px; height: 50px; background: #8e1e3b; border-radius: 50%; box-shadow: 0 4px 0 #000; color: rgba(255,255,255,0.2); }
         .round-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #000; }
         .system-btns { display: flex; gap: 20px; margin-top: 40px; transform: rotate(-15deg); }
-        .pill-btn { width: 45px; height: 12px; background: #555; border-radius: 10px; box-shadow: 0 3px #222; }
+        .pill-btn { width: 45px; height: 12px; background: #555; border-radius: 10px; box-shadow: 0 3px #222; cursor: pointer; }
+
         .messenger-ui { margin-top: 20px; width: 310px; background: #2a2a2a; padding: 15px; border-radius: 15px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         #msg-input { background: #111; border: 1px solid #444; color: #9bbc0f; padding: 10px; border-radius: 8px; outline: none; }
         #copy-btn { background: #8e1e3b; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; }
@@ -73,7 +75,7 @@
 <div class="gba-body">
     <div class="screen-bezel">
         <div id="game-screen">
-            <div id="msg-display">點擊畫面開啟音樂</div>
+            <div id="msg-display">按方向鍵開始</div>
             <div id="sprite-container">
                 <div id="dog-sprite"></div>
             </div>
@@ -81,28 +83,28 @@
     </div>
     <div class="controls">
         <div class="d-pad">
-            <button class="btn up" onclick="tryPlayMusic()"></button>
+            <button class="btn up" onclick="forcePlayMusic()"></button>
             <button class="btn left" ontouchstart="move('L', true)" onmousedown="move('L', true)">◀</button>
             <button class="btn right" ontouchstart="move('R', true)" onmousedown="move('R', true)">▶</button>
-            <button class="btn down" onclick="tryPlayMusic()"></button>
+            <button class="btn down" onclick="forcePlayMusic()"></button>
         </div>
         <div class="action-btns">
-            <button class="btn round-btn" ontouchstart="jump()" onmousedown="tryPlayMusic()">A</button>
-            <button class="btn round-btn" onclick="tryPlayMusic()">B</button>
+            <button class="btn round-btn" ontouchstart="jump()" onmousedown="forcePlayMusic()">A</button>
+            <button class="btn round-btn" onclick="forcePlayMusic()">B</button>
         </div>
     </div>
     <div class="system-btns">
-        <div class="pill-btn" onclick="tryPlayMusic()"></div>
-        <div class="pill-btn" onclick="tryPlayMusic()"></div>
+        <div class="pill-btn" onclick="forcePlayMusic()"></div>
+        <div class="pill-btn" onclick="forcePlayMusic()"></div>
     </div>
 </div>
 
 <div class="messenger-ui" id="ui-panel">
-    <input type="text" id="msg-input" placeholder="寫點什麼..." maxlength="30">
-    <button id="copy-btn" onclick="generateLink()">🚀 產生連結並開啟音樂</button>
+    <input type="text" id="msg-input" placeholder="輸入訊息..." maxlength="30">
+    <button id="copy-btn" onclick="generateLink()">🚀 產生並複製連結</button>
 </div>
 
-<audio id="bg-music" loop preload="auto">
+<audio id="bg-music" loop preload="auto" webkit-playsinline playsinline>
     <source src="Morning_sprite_walk.mp3" type="audio/mpeg">
 </audio>
 
@@ -119,19 +121,22 @@
 
     let isMoving = false, walkIdx = 0, animTimer = null;
     let textPos = 230; 
-    let currentDir = 'R';
-    let message = "點擊畫面開啟音樂";
+    let message = "按方向鍵開始";
     let musicStarted = false;
 
-    // 全域點擊啟動
-    document.body.addEventListener('touchstart', tryPlayMusic, { once: true });
-    document.body.addEventListener('click', tryPlayMusic, { once: true });
-
-    function tryPlayMusic() {
+    // 強制播放函式
+    function forcePlayMusic() {
         if (!musicStarted) {
-            bgMusic.play().then(() => {
-                musicStarted = true;
-            }).catch(e => console.log("等待手勢..."));
+            bgMusic.currentTime = 0; // 重置時間
+            let playPromise = bgMusic.play();
+            if (playPromise !== undefined) {
+                playPromise.then(_ => {
+                    musicStarted = true;
+                    console.log("音樂播放成功");
+                }).catch(error => {
+                    console.log("播放失敗:", error);
+                });
+            }
         }
     }
 
@@ -150,27 +155,27 @@
     function generateLink() {
         const text = msgInput.value.trim();
         if (!text) return alert("請輸入內容");
-        tryPlayMusic();
+        forcePlayMusic();
         const baseUrl = window.location.origin + window.location.pathname;
         const finalUrl = `${baseUrl}?msg=${encodeURIComponent(text)}`;
-        navigator.clipboard.writeText(finalUrl).then(() => alert("連結已複製且音樂已啟動！"));
+        navigator.clipboard.writeText(finalUrl).then(() => alert("連結已複製！"));
         message = text;
         msgDisplay.innerText = message;
         textPos = 230;
+        msgDisplay.style.left = "230px";
     }
 
     function move(dir, pressed) {
-        tryPlayMusic();
+        forcePlayMusic(); // 每次按鍵都嘗試解鎖
         if (pressed) {
             isMoving = true;
-            currentDir = dir;
             const facing = (dir === 'L') ? -1 : 1;
             container.style.transform = `scale(0.18) scaleX(${facing})`;
             if (!animTimer) {
                 animTimer = setInterval(() => {
                     walkIdx = (walkIdx + 1) % walkFrames.length;
                     setFrame(walkFrames[walkIdx]);
-                    if (currentDir === 'R') textPos -= 10;
+                    if (dir === 'R') textPos -= 10;
                     else textPos += 10;
                     const textWidth = msgDisplay.offsetWidth;
                     if (textPos < -textWidth) textPos = 230;
@@ -186,13 +191,13 @@
     }
 
     function jump() {
-        tryPlayMusic();
+        forcePlayMusic();
         container.style.transition = "bottom 0.2s ease-out";
         container.style.bottom = "80px";
         setTimeout(() => container.style.bottom = "5px", 200);
     }
 
-    const stop = () => move(currentDir, false);
+    const stop = () => move('', false);
     window.addEventListener('mouseup', stop);
     window.addEventListener('touchend', stop);
 </script>
