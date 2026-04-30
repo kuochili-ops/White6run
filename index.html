@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>𓃥白六傳情 - 字體色彩版</title>
+    <title>𓃥白六傳情 - 自動散步版</title>
     <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;900&family=Zen+Old+Mincho:wght@700;900&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -25,7 +25,6 @@
             padding: 15px; position: relative;
             box-shadow: inset -5px -5px 15px rgba(0,0,0,0.4), 15px 15px 30px rgba(0,0,0,0.6);
         }
-
         .screen-area {
             width: 270px; height: 190px;
             background: var(--screen-bg); border-radius: 8px;
@@ -34,7 +33,6 @@
             box-shadow: inset 2px 2px 5px rgba(0,0,0,0.2);
         }
         #game-screen { width: 100%; height: 100%; position: relative; overflow: hidden; }
-
         #home-overlay {
             position: absolute; width: 100%; height: 100%;
             background: var(--screen-bg); z-index: 100;
@@ -45,18 +43,13 @@
             font-size: 16px; font-weight: bold; color: var(--pixel-green);
             min-height: 4em; line-height: 1.5; margin-bottom: 10px;
         }
-
-        /* 遊戲訊息顯示 */
         #msg-display {
             position: absolute; white-space: nowrap; font-size: 150px; font-weight: 900;
-            /* 預設樣式 */
             color: rgba(15, 56, 15, 0.15); 
             top: 50%; transform: translateY(-50%);
             left: 270px; pointer-events: none; line-height: 1;
             transition: color 0.3s ease, font-family 0.3s ease;
         }
-
-        /* 白六精靈圖 */
         #sprite-container {
             width: var(--w); height: var(--h); position: absolute; left: 50%; bottom: 5px;
             margin-left: calc(var(--w) / -2); transform: scale(0.2); transform-origin: bottom center;
@@ -67,26 +60,20 @@
             background-repeat: no-repeat; background-size: 999px 700px;
             background-position: -666px -350px; image-rendering: pixelated;
         }
-
-        /* 控制器 */
         .controls { width: 100%; display: flex; justify-content: space-between; margin-top: 35px; padding: 0 10px; }
         .d-pad { display: grid; grid-template-columns: repeat(3, 40px); grid-template-rows: repeat(3, 40px); filter: drop-shadow(0 4px 0 #000); }
-        .btn { background: #333; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; active { background: #222; } }
+        .btn { background: #333; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; }
         .up { grid-column: 2; grid-row: 1; border-radius: 6px 6px 0 0; color: #fff; font-size: 10px; }
         .left { grid-column: 1; grid-row: 2; border-radius: 6px 0 0 6px; color: #fff; }
         .right { grid-column: 3; grid-row: 2; border-radius: 0 6px 6px 0; color: #fff; }
         .down { grid-column: 2; grid-row: 3; border-radius: 0 0 6px 6px; color: #fff; font-size: 10px; }
         .d-pad::after { content: ""; grid-column: 2; grid-row: 2; background: #333; }
-        
         .action-btns { display: flex; gap: 15px; transform: rotate(-15deg); margin-top: 15px; }
         .round-btn { width: 50px; height: 50px; background: #8e1e3b; border-radius: 50%; box-shadow: 0 4px 0 #000; color: rgba(255,255,255,0.4); font-weight: bold; font-size: 14px; }
-        .round-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #000; }
-
         .system-btns { display: flex; gap: 20px; margin-top: 45px; transform: rotate(-15deg); }
         .sys-group { text-align: center; cursor: pointer; }
         .pill-btn { width: 45px; height: 12px; background: #555; border-radius: 10px; box-shadow: 0 3px #222; }
         .sys-label { font-size: 9px; font-weight: bold; color: #333; margin-top: 6px; }
-
         .messenger-ui { margin-top: 20px; width: 310px; background: #2a2a2a; padding: 15px; border-radius: 15px; display: flex; flex-direction: column; gap: 10px; }
         #msg-input { background: #111; border: 1px solid #444; color: #9bbc0f; padding: 10px; border-radius: 8px; outline: none; }
         #copy-btn { background: #8e1e3b; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; }
@@ -159,103 +146,104 @@
     let isMoving = false, walkIdx = 0, animTimer = null, textPos = 270; 
     let musicStarted = false, isMuted = false;
 
-    // 字體與顏色設定
+    // 自動散步邏輯
+    let autoWalkTimer = null;
+    let isAutoWalking = false;
+
     const fonts = ['sans-serif', "'M PLUS Rounded 1c', sans-serif", "'Zen Old Mincho', serif"];
     const colors = ['rgba(15, 56, 15, 0.15)', 'rgba(15, 40, 80, 0.18)', 'rgba(100, 30, 30, 0.18)', 'rgba(30, 80, 30, 0.18)'];
-    let fontIdx = 0;
-    let colorIdx = 0;
+    let fontIdx = 0, colorIdx = 0;
 
-    function changeFont() {
-        fontIdx = (fontIdx + 1) % fonts.length;
-        msgDisplay.style.fontFamily = fonts[fontIdx];
-    }
-
-    function changeColor() {
-        colorIdx = (colorIdx + 1) % colors.length;
-        msgDisplay.style.color = colors[colorIdx];
-    }
+    function changeFont() { fontIdx = (fontIdx + 1) % fonts.length; msgDisplay.style.fontFamily = fonts[fontIdx]; resetAutoWalkTimer(); }
+    function changeColor() { colorIdx = (colorIdx + 1) % colors.length; msgDisplay.style.color = colors[colorIdx]; resetAutoWalkTimer(); }
 
     const welcomeMsg = "你好，親友們❤️\n白六今天想跟你分享一段話...";
     function typeEffect() {
-        typingText.innerText = "";
-        startPrompt.style.visibility = "hidden";
+        typingText.innerText = ""; startPrompt.style.visibility = "hidden";
         let i = 0;
         const timer = setInterval(() => {
-            typingText.innerText += welcomeMsg[i];
-            i++;
-            if (i >= welcomeMsg.length) {
-                clearInterval(timer);
-                startPrompt.style.visibility = "visible";
-            }
+            typingText.innerText += welcomeMsg[i]; i++;
+            if (i >= welcomeMsg.length) { clearInterval(timer); startPrompt.style.visibility = "visible"; }
         }, 80);
     }
 
     const urlParams = new URLSearchParams(window.location.search);
     const sharedMsg = urlParams.get('msg');
-    if (sharedMsg) {
-        msgDisplay.innerText = decodeURIComponent(sharedMsg);
-        uiPanel.style.display = "none";
-    }
+    if (sharedMsg) { msgDisplay.innerText = decodeURIComponent(sharedMsg); uiPanel.style.display = "none"; }
     typeEffect();
 
     function startGame() {
         homeOverlay.style.display = "none";
-        if (!isMuted) {
-            bgMusic.play().then(() => musicStarted = true).catch(() => {});
-        }
+        if (!isMuted) bgMusic.play().then(() => musicStarted = true).catch(() => {});
+        resetAutoWalkTimer();
     }
 
     function goHome() {
-        homeOverlay.style.display = "flex";
-        bgMusic.pause();
-        musicStarted = false;
+        homeOverlay.style.display = "flex"; bgMusic.pause(); musicStarted = false;
+        clearTimeout(autoWalkTimer); stopMovement();
         typeEffect();
     }
 
     function toggleMute() {
-        isMuted = !isMuted;
-        bgMusic.muted = isMuted;
+        isMuted = !isMuted; bgMusic.muted = isMuted;
         document.getElementById('mute-icon').style.display = isMuted ? "block" : "none";
-        if (!isMuted && !musicStarted && homeOverlay.style.display === "none") {
-            bgMusic.play();
-            musicStarted = true;
-        }
+        if (!isMuted && !musicStarted && homeOverlay.style.display === "none") { bgMusic.play(); musicStarted = true; }
+        resetAutoWalkTimer();
     }
 
     function generateLink() {
-        const text = msgInput.value.trim();
-        if (!text) return alert("請輸入內容");
-        const baseUrl = window.location.origin + window.location.pathname;
-        const finalUrl = `${baseUrl}?msg=${encodeURIComponent(text)}`;
+        const text = msgInput.value.trim(); if (!text) return alert("請輸入內容");
+        const finalUrl = `${window.location.origin}${window.location.pathname}?msg=${encodeURIComponent(text)}`;
         navigator.clipboard.writeText(finalUrl).then(() => alert("連結已複製！"));
-        msgDisplay.innerText = text;
-        startGame();
+        msgDisplay.innerText = text; startGame();
     }
 
     function move(dir, pressed) {
         if (homeOverlay.style.display !== "none") return;
         if (pressed) {
-            isMoving = true;
-            container.style.transform = `scale(0.2) scaleX(${dir === 'L' ? -1 : 1})`;
-            if (!animTimer) {
-                animTimer = setInterval(() => {
-                    walkIdx = (walkIdx + 1) % walkFrames.length;
-                    dog.style.backgroundPosition = `-${walkFrames[walkIdx][0] * 333}px -${walkFrames[walkIdx][1] * 350}px`;
-                    textPos += (dir === 'R' ? -12 : 12);
-                    if (textPos < -msgDisplay.offsetWidth) textPos = 270;
-                    if (textPos > 270) textPos = -msgDisplay.offsetWidth;
-                    msgDisplay.style.left = textPos + "px";
-                }, 100);
-            }
+            clearTimeout(autoWalkTimer);
+            isAutoWalking = false;
+            startMovement(dir);
         } else {
-            isMoving = false;
-            clearInterval(animTimer); animTimer = null;
-            dog.style.backgroundPosition = `-${idleFrame[0] * 333}px -${idleFrame[1] * 350}px`;
+            stopMovement();
+            resetAutoWalkTimer();
+        }
+    }
+
+    function startMovement(dir) {
+        if (animTimer) return;
+        isMoving = true;
+        container.style.transform = `scale(0.2) scaleX(${dir === 'L' ? -1 : 1})`;
+        animTimer = setInterval(() => {
+            walkIdx = (walkIdx + 1) % walkFrames.length;
+            dog.style.backgroundPosition = `-${walkFrames[walkIdx][0] * 333}px -${walkFrames[walkIdx][1] * 350}px`;
+            textPos += (dir === 'R' ? -12 : 12);
+            if (textPos < -msgDisplay.offsetWidth) textPos = 270;
+            if (textPos > 270) textPos = -msgDisplay.offsetWidth;
+            msgDisplay.style.left = textPos + "px";
+        }, 100);
+    }
+
+    function stopMovement() {
+        isMoving = false;
+        clearInterval(animTimer);
+        animTimer = null;
+        dog.style.backgroundPosition = `-${idleFrame[0] * 333}px -${idleFrame[1] * 350}px`;
+    }
+
+    function resetAutoWalkTimer() {
+        clearTimeout(autoWalkTimer);
+        if (homeOverlay.style.display === "none" && !isMoving) {
+            autoWalkTimer = setTimeout(() => {
+                isAutoWalking = true;
+                startMovement('R');
+            }, 1000);
         }
     }
 
     function jump() {
         if (homeOverlay.style.display !== "none") return;
+        resetAutoWalkTimer();
         container.style.transition = "bottom 0.2s ease-out";
         container.style.bottom = "80px";
         setTimeout(() => container.style.bottom = "5px", 200);
