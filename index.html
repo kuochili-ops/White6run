@@ -3,23 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>𓃥白六世界時鐘</title>
+    <title>𓃥白六世界時鐘 - 訊息推動版</title>
     <style>
         :root {
             --gba-color: #8b8b8b;
             --screen-bg: #9bbc0f; 
-            /* 單格精確尺寸：999px / 3 與 700px / 2 */
-            --w: 333px; 
-            --h: 350px; 
+            --w: 333px; --h: 350px; 
         }
         body {
             background-color: #1a1a1a;
-            display: flex; justify-content: center; align-items: center;
-            height: 100vh; margin: 0; overflow: hidden;
-            touch-action: manipulation; -webkit-user-select: none;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            min-height: 100vh; margin: 0; overflow-x: hidden;
+            font-family: sans-serif; touch-action: manipulation; -webkit-user-select: none;
         }
+        /* Game Boy 主體 */
         .gba-body {
-            width: 320px; height: 560px;
+            width: 320px; height: 520px;
             background: var(--gba-color);
             border-radius: 15px 15px 80px 15px;
             display: flex; flex-direction: column; align-items: center;
@@ -27,44 +26,66 @@
             box-shadow: inset -5px -5px 15px rgba(0,0,0,0.4), 15px 15px 30px rgba(0,0,0,0.6);
         }
         .screen-bezel {
-            width: 280px; height: 200px;
+            width: 280px; height: 180px;
             background: #333; border-radius: 5px;
             display: flex; justify-content: center; align-items: center;
             border: 4px solid #111; overflow: hidden;
         }
         #game-screen {
-            width: 240px; height: 160px;
-            background: var(--screen-bg); position: relative;
+            width: 240px; height: 140px;
+            background: var(--screen-bg); position: relative; overflow: hidden;
         }
-        /* ⚠️ 關鍵修正：獨立容器嚴格限制顯示範圍 */
+        /* 訊息文字層：初始位置在螢幕右側邊界外 */
+        #msg-display {
+            position: absolute;
+            white-space: nowrap;
+            font-size: 60px;
+            font-weight: 900;
+            color: rgba(0, 0, 0, 0.15);
+            top: 50%;
+            transform: translateY(-50%);
+            left: 240px; 
+            pointer-events: none;
+        }
         #sprite-container {
             width: var(--w); height: var(--h);
-            position: absolute; left: 50%; bottom: 20px;
+            position: absolute; left: 50%; bottom: 10px;
             margin-left: calc(var(--w) / -2);
-            transform: scale(0.2); 
-            transform-origin: bottom center;
-            overflow: hidden; 
+            transform: scale(0.18); transform-origin: bottom center;
+            overflow: hidden; z-index: 10;
         }
         #dog-sprite {
             width: 100%; height: 100%;
             background-image: url('image_8.png');
             background-repeat: no-repeat;
-            background-size: 999px 700px; /* 鎖定總圖尺寸 */
-            /* 預設靜止：編號 6 (下右圖) */
-            background-position: -666px -350px; 
+            background-size: 999px 700px;
+            background-position: -666px -350px; /* 靜止編號 6 */
             image-rendering: pixelated;
         }
-        /* 控制器樣式 */
-        .controls { width: 100%; display: flex; justify-content: space-between; margin-top: 30px; padding: 0 10px; }
-        .d-pad { display: grid; grid-template-columns: repeat(3, 45px); grid-template-rows: repeat(3, 45px); }
-        .btn { background: #333; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px #000; }
+        /* 控制器與訊息欄 */
+        .controls { width: 100%; display: flex; justify-content: space-between; margin-top: 20px; }
+        .d-pad { display: grid; grid-template-columns: repeat(3, 40px); grid-template-rows: repeat(3, 40px); }
+        .btn { background: #333; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px #000; color: #555; }
         .btn:active { transform: translateY(2px); box-shadow: 0 2px #000; background: #222; }
-        .up { grid-column: 2; grid-row: 1; border-radius: 5px 5px 0 0; }
-        .left { grid-column: 1; grid-row: 2; border-radius: 5px 0 0 5px; }
-        .right { grid-column: 3; grid-row: 2; border-radius: 0 5px 5px 0; }
-        .down { grid-column: 2; grid-row: 3; border-radius: 0 0 5px 5px; }
-        .action-btns { display: flex; gap: 15px; transform: rotate(-15deg); margin-top: 20px; }
-        .round-btn { width: 55px; height: 55px; background: #8e1e3b; border-radius: 50%; color: white; font-weight: bold; }
+        .right { grid-column: 3; grid-row: 2; border-radius: 0 5px 5px 0; background: #444; color: #fff; }
+        .action-btns { display: flex; gap: 10px; transform: rotate(-15deg); }
+        .round-btn { width: 45px; height: 45px; background: #8e1e3b; border-radius: 50%; }
+
+        /* 訊息輸入介面 */
+        .messenger-ui {
+            margin-top: 30px; width: 320px;
+            background: #2a2a2a; padding: 15px; border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            display: flex; gap: 10px;
+        }
+        #msg-input {
+            flex: 1; background: #111; border: 1px solid #444;
+            color: #9bbc0f; padding: 8px; border-radius: 5px; outline: none;
+        }
+        #send-btn {
+            background: #8e1e3b; color: white; border: none;
+            padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -72,6 +93,7 @@
 <div class="gba-body">
     <div class="screen-bezel">
         <div id="game-screen">
+            <div id="msg-display"></div>
             <div id="sprite-container">
                 <div id="dog-sprite"></div>
             </div>
@@ -80,8 +102,8 @@
     <div class="controls">
         <div class="d-pad">
             <button class="btn up">▲</button>
-            <button class="btn left" ontouchstart="move('ArrowLeft', true)" onmousedown="move('ArrowLeft', true)">◀</button>
-            <button class="btn right" ontouchstart="move('ArrowRight', true)" onmousedown="move('ArrowRight', true)">▶</button>
+            <button class="btn left">◀</button>
+            <button class="btn right" ontouchstart="move(true)" onmousedown="move(true)">▶</button>
             <button class="btn down">▼</button>
         </div>
         <div class="action-btns">
@@ -91,34 +113,61 @@
     </div>
 </div>
 
+<div class="messenger-ui">
+    <input type="text" id="msg-input" placeholder="輸入訊息內容..." maxlength="20">
+    <button id="send-btn" onclick="sendMessage()">發送</button>
+</div>
+
 <script>
     const dog = document.getElementById('dog-sprite');
     const container = document.getElementById('sprite-container');
-    
-    // 動作序列位移 (x 索引, y 索引)
-    // 走路：編號 1 (0,0) → 2 (1,0) → 3 (2,0) → 4 (0,1) → 5 (1,1)
-    const walkFrames = [[0,0], [1,0], [2,0], [0,1], [1,1]]; 
-    // 靜止：編號 6 (2,1)
-    const idleFrame = [2,1]; 
+    const msgDisplay = document.getElementById('msg-display');
+    const msgInput = document.getElementById('msg-input');
 
-    let isMoving = false, walkIdx = 0, animTimer = null, facing = 1;
+    const walkFrames = [[0,0], [1,0], [2,0], [0,1], [1,1]]; 
+    const idleFrame = [2,1];
+
+    let isMoving = false, walkIdx = 0, animTimer = null;
+    let textPos = 240; // 初始位置在螢幕右側邊緣
+    let currentMessage = "";
 
     function setFrame(coords) {
-        // 精確像素位移計算
         dog.style.backgroundPosition = `-${coords[0] * 333}px -${coords[1] * 350}px`;
     }
 
-    function move(dir, pressed) {
+    // 發送訊息邏輯
+    function sendMessage() {
+        if (msgInput.value.trim() === "") return;
+        currentMessage = msgInput.value;
+        msgDisplay.innerText = currentMessage;
+        
+        // 重置文字位置與狀態
+        textPos = 240;
+        msgDisplay.style.left = textPos + "px";
+        msgInput.value = "";
+        alert("訊息已發送！請按「向右鍵」讓白六推動訊息文字。");
+    }
+
+    function move(pressed) {
         if (pressed) {
             isMoving = true;
-            facing = (dir === 'ArrowLeft') ? -1 : 1;
-            // 翻轉容器
-            container.style.transform = `scale(0.2) scaleX(${facing})`;
+            container.style.transform = `scale(0.18) scaleX(1)`;
             if (!animTimer) {
                 animTimer = setInterval(() => {
                     walkIdx = (walkIdx + 1) % walkFrames.length;
                     setFrame(walkFrames[walkIdx]);
-                }, 120);
+                    
+                    // 當白六走動時，文字向左移動
+                    if (currentMessage !== "") {
+                        textPos -= 8; // 移動速度
+                        msgDisplay.style.left = textPos + "px";
+                        
+                        // 若文字完全消失在左側，則循環回到右側
+                        if (textPos < -msgDisplay.offsetWidth) {
+                            textPos = 240;
+                        }
+                    }
+                }, 110);
             }
         } else {
             isMoving = false;
@@ -128,13 +177,14 @@
     }
 
     function jump() {
-        container.style.bottom = "80px";
-        setTimeout(() => container.style.bottom = "20px", 250);
+        container.style.bottom = "60px";
+        setTimeout(() => container.style.bottom = "10px", 250);
     }
 
-    const stop = () => move('', false);
+    const stop = () => move(false);
     window.addEventListener('mouseup', stop);
     window.addEventListener('touchend', stop);
 </script>
+
 </body>
 </html>
