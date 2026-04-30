@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>𓃥白六傳情 - 完整遊戲版</title>
+    <title>𓃥白六傳情 - 無邊框優化</title>
     <style>
         :root {
             --gba-color: #8b8b8b;
             --screen-bg: #9bbc0f; 
             --w: 333px; --h: 350px; 
+            --pixel-green: #0f380f;
         }
         body {
             background-color: #1a1a1a;
@@ -23,46 +24,50 @@
             padding: 15px; position: relative;
             box-shadow: inset -5px -5px 15px rgba(0,0,0,0.4), 15px 15px 30px rgba(0,0,0,0.6);
         }
-        .screen-bezel {
+
+        /* 移除黑框：直接將螢幕嵌在主機面板上 */
+        .screen-area {
             width: 270px; height: 190px;
-            background: #333; border-radius: 5px;
+            background: var(--screen-bg); border-radius: 8px;
             display: flex; justify-content: center; align-items: center;
-            border: 4px solid #111; overflow: hidden; margin-top: 10px; position: relative;
+            overflow: hidden; margin-top: 20px; position: relative;
+            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.2); /* 增加一點點深度感 */
         }
         #game-screen {
-            width: 230px; height: 150px;
-            background: var(--screen-bg); position: relative; overflow: hidden;
+            width: 100%; height: 100%;
+            position: relative; overflow: hidden;
         }
 
-        /* --- 遊戲首頁樣式 --- */
+        /* 首頁層 */
         #home-overlay {
             position: absolute; width: 100%; height: 100%;
             background: var(--screen-bg); z-index: 100;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            padding: 10px; box-sizing: border-box; text-align: center;
+            padding: 20px; box-sizing: border-box; text-align: center;
         }
         #typing-text {
-            font-size: 16px; font-weight: bold; color: #0f380f;
-            min-height: 3em; line-height: 1.4; margin-bottom: 20px;
+            font-size: 16px; font-weight: bold; color: var(--pixel-green);
+            min-height: 4em; line-height: 1.5; margin-bottom: 15px;
         }
         .blink-text {
-            font-size: 12px; color: #0f380f; font-weight: bold;
-            animation: blink 1s infinite;
+            font-size: 14px; color: var(--pixel-green); font-weight: bold;
+            animation: blink 1.2s infinite; margin-top: 10px;
         }
         @keyframes blink { 50% { opacity: 0; } }
 
-        /* --- 遊戲內部樣式 --- */
+        /* 遊戲內部樣式 */
         #msg-display {
             position: absolute; white-space: nowrap; font-size: 150px; font-weight: 900;
-            color: rgba(0, 0, 0, 0.12); top: 50%; transform: translateY(-50%);
-            left: 230px; pointer-events: none; line-height: 1;
+            color: rgba(15, 56, 15, 0.1); top: 50%; transform: translateY(-50%);
+            left: 270px; pointer-events: none; line-height: 1;
         }
         #mute-icon {
-            position: absolute; top: 5px; right: 5px; font-size: 14px; opacity: 0.5; display: none;
+            position: absolute; top: 8px; right: 8px; font-size: 16px; 
+            color: var(--pixel-green); opacity: 0.6; display: none;
         }
         #sprite-container {
             width: var(--w); height: var(--h); position: absolute; left: 50%; bottom: 5px;
-            margin-left: calc(var(--w) / -2); transform: scale(0.18); transform-origin: bottom center;
+            margin-left: calc(var(--w) / -2); transform: scale(0.2); transform-origin: bottom center;
             overflow: hidden; z-index: 10;
         }
         #dog-sprite {
@@ -71,24 +76,24 @@
             background-position: -666px -350px; image-rendering: pixelated;
         }
 
-        /* 控制器 */
-        .controls { width: 100%; display: flex; justify-content: space-between; margin-top: 30px; padding: 0 10px; }
-        .d-pad { display: grid; grid-template-columns: 40px 40px 40px; grid-template-rows: 40px 40px 40px; filter: drop-shadow(0 4px 0 #000); }
-        .btn { background: #333; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.1s; }
+        /* 控制器樣式與之前相同 */
+        .controls { width: 100%; display: flex; justify-content: space-between; margin-top: 35px; padding: 0 10px; }
+        .d-pad { display: grid; grid-template-columns: repeat(3, 40px); grid-template-rows: repeat(3, 40px); filter: drop-shadow(0 4px 0 #000); }
+        .btn { background: #333; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; }
         .up { grid-column: 2; grid-row: 1; border-radius: 6px 6px 0 0; }
         .left { grid-column: 1; grid-row: 2; border-radius: 6px 0 0 6px; color: #fff; }
         .right { grid-column: 3; grid-row: 2; border-radius: 0 6px 6px 0; color: #fff; }
         .down { grid-column: 2; grid-row: 3; border-radius: 0 0 6px 6px; }
         .d-pad::after { content: ""; grid-column: 2; grid-row: 2; background: #333; }
         
-        .action-btns { display: flex; gap: 12px; transform: rotate(-15deg); margin-top: 15px; }
-        .round-btn { width: 50px; height: 50px; background: #8e1e3b; border-radius: 50%; box-shadow: 0 4px 0 #000; color: rgba(255,255,255,0.4); font-weight: bold; font-size: 14px; }
+        .action-btns { display: flex; gap: 15px; transform: rotate(-15deg); margin-top: 15px; }
+        .round-btn { width: 50px; height: 50px; background: #8e1e3b; border-radius: 50%; box-shadow: 0 4px 0 #000; color: rgba(255,255,255,0.3); font-weight: bold; }
         .round-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #000; }
 
-        .system-btns { display: flex; gap: 20px; margin-top: 40px; transform: rotate(-15deg); }
+        .system-btns { display: flex; gap: 20px; margin-top: 45px; transform: rotate(-15deg); }
         .sys-group { text-align: center; cursor: pointer; }
         .pill-btn { width: 45px; height: 12px; background: #555; border-radius: 10px; box-shadow: 0 3px #222; }
-        .sys-label { font-size: 8px; font-weight: bold; color: #333; margin-top: 5px; }
+        .sys-label { font-size: 9px; font-weight: bold; color: #333; margin-top: 6px; }
 
         .messenger-ui { margin-top: 20px; width: 310px; background: #2a2a2a; padding: 15px; border-radius: 15px; display: flex; flex-direction: column; gap: 10px; }
         #msg-input { background: #111; border: 1px solid #444; color: #9bbc0f; padding: 10px; border-radius: 8px; outline: none; }
@@ -98,12 +103,12 @@
 <body>
 
 <div class="gba-body">
-    <div class="screen-bezel">
+    <div style="font-size: 10px; color: #555; font-weight: bold; margin-bottom: 5px; position: absolute; top: 10px;">BATTERY 🔴</div>
+    <div class="screen-area">
         <div id="home-overlay">
             <div id="typing-text"></div>
             <div id="start-prompt" class="blink-text" style="visibility: hidden;">PRESS START</div>
         </div>
-
         <div id="game-screen">
             <div id="mute-icon">🔇</div>
             <div id="msg-display">白六與你同行</div>
@@ -139,7 +144,7 @@
 </div>
 
 <div class="messenger-ui" id="ui-panel">
-    <input type="text" id="msg-input" placeholder="輸入訊息..." maxlength="30">
+    <input type="text" id="msg-input" placeholder="說點什麼..." maxlength="30">
     <button id="copy-btn" onclick="generateLink()">🚀 產生並複製連結</button>
 </div>
 
@@ -161,13 +166,10 @@
 
     const walkFrames = [[0,0], [1,0], [2,0], [0,1], [1,1]]; 
     const idleFrame = [2,1];
-    let isMoving = false, walkIdx = 0, animTimer = null;
-    let textPos = 230; 
-    let musicStarted = false;
-    let isMuted = false;
+    let isMoving = false, walkIdx = 0, animTimer = null, textPos = 270; 
+    let musicStarted = false, isMuted = false;
 
-    // 首頁打字效果
-    const welcomeMsg = "你好，親友們❤️\n白六今天想跟你一起散步。";
+    const welcomeMsg = "你好，親友們❤️\n白六想帶你去看一些有趣的風景！";
     function typeEffect() {
         typingText.innerText = "";
         startPrompt.style.visibility = "hidden";
@@ -179,10 +181,9 @@
                 clearInterval(timer);
                 startPrompt.style.visibility = "visible";
             }
-        }, 100);
+        }, 80);
     }
 
-    // 初始化檢測
     const urlParams = new URLSearchParams(window.location.search);
     const sharedMsg = urlParams.get('msg');
     if (sharedMsg) {
@@ -209,7 +210,7 @@
         isMuted = !isMuted;
         bgMusic.muted = isMuted;
         muteIcon.style.display = isMuted ? "block" : "none";
-        if (!isMuted && !musicStarted) {
+        if (!isMuted && !musicStarted && homeOverlay.style.display === "none") {
             bgMusic.play();
             musicStarted = true;
         }
@@ -222,21 +223,21 @@
         const finalUrl = `${baseUrl}?msg=${encodeURIComponent(text)}`;
         navigator.clipboard.writeText(finalUrl).then(() => alert("連結已複製！"));
         msgDisplay.innerText = text;
-        startGame(); // 自動進入遊戲
+        startGame();
     }
 
     function move(dir, pressed) {
         if (homeOverlay.style.display !== "none") return;
         if (pressed) {
             isMoving = true;
-            container.style.transform = `scale(0.18) scaleX(${dir === 'L' ? -1 : 1})`;
+            container.style.transform = `scale(0.2) scaleX(${dir === 'L' ? -1 : 1})`;
             if (!animTimer) {
                 animTimer = setInterval(() => {
                     walkIdx = (walkIdx + 1) % walkFrames.length;
                     dog.style.backgroundPosition = `-${walkFrames[walkIdx][0] * 333}px -${walkFrames[walkIdx][1] * 350}px`;
-                    dir === 'R' ? textPos -= 12 : textPos += 12;
-                    if (textPos < -msgDisplay.offsetWidth) textPos = 230;
-                    if (textPos > 230) textPos = -msgDisplay.offsetWidth;
+                    textPos += (dir === 'R' ? -12 : 12);
+                    if (textPos < -msgDisplay.offsetWidth) textPos = 270;
+                    if (textPos > 270) textPos = -msgDisplay.offsetWidth;
                     msgDisplay.style.left = textPos + "px";
                 }, 100);
             }
