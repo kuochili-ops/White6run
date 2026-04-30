@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>𓃥白六傳情 - 完整系統</title>
+    <title>𓃥白六傳情 - 音樂動態版</title>
     <style>
         :root {
             --gba-color: #8b8b8b;
@@ -13,48 +13,46 @@
         body {
             background-color: #1a1a1a;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            min-height: 100vh; margin: 0; padding: 20px;
-            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; 
-            touch-action: manipulation; -webkit-user-select: none;
+            min-height: 100vh; margin: 0; padding: 10px;
+            font-family: 'PingFang TC', sans-serif; touch-action: manipulation; -webkit-user-select: none;
         }
 
-        /* Game Boy 主機 */
+        /* Game Boy 主機樣式 */
         .gba-body {
-            width: 320px; height: 580px;
+            width: 310px; height: 560px;
             background: var(--gba-color);
             border-radius: 15px 15px 80px 15px;
             display: flex; flex-direction: column; align-items: center;
-            padding: 20px; position: relative;
+            padding: 15px; position: relative;
             box-shadow: inset -5px -5px 15px rgba(0,0,0,0.4), 15px 15px 30px rgba(0,0,0,0.6);
         }
 
-        /* 螢幕 */
         .screen-bezel {
-            width: 280px; height: 200px;
+            width: 270px; height: 190px;
             background: #333; border-radius: 5px;
             display: flex; justify-content: center; align-items: center;
             border: 4px solid #111; overflow: hidden; margin-top: 10px;
         }
         #game-screen {
-            width: 240px; height: 160px;
+            width: 230px; height: 150px;
             background: var(--screen-bg); position: relative; overflow: hidden;
         }
 
-        /* 背景大字訊息：字高幾乎等同螢幕高度 */
+        /* 背景大型訊息 */
         #msg-display {
             position: absolute;
             white-space: nowrap;
-            font-size: 150px; 
+            font-size: 140px; 
             font-weight: 900;
             color: rgba(0, 0, 0, 0.12);
             top: 50%;
             transform: translateY(-50%);
-            left: 240px; 
+            left: 230px; 
             pointer-events: none;
             line-height: 1;
         }
 
-        /* 白六 */
+        /* 白六角色 */
         #sprite-container {
             width: var(--w); height: var(--h);
             position: absolute; left: 50%; bottom: 5px;
@@ -71,51 +69,38 @@
             image-rendering: pixelated;
         }
 
-        /* 控制器 */
-        .controls { width: 100%; display: flex; justify-content: space-between; margin-top: 25px; padding: 0 10px; }
-        .d-pad { display: grid; grid-template-columns: repeat(3, 42px); grid-template-rows: repeat(3, 42px); }
+        /* 控制器排列 */
+        .controls { width: 100%; display: flex; justify-content: space-between; margin-top: 20px; padding: 0 10px; }
+        .d-pad { display: grid; grid-template-columns: repeat(3, 40px); grid-template-rows: repeat(3, 40px); }
         .btn { background: #333; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px #000; }
         .btn:active { transform: translateY(2px); box-shadow: 0 2px #000; background: #222; }
         
-        .up { grid-column: 2; grid-row: 1; border-radius: 4px 4px 0 0; opacity: 0.3; }
-        .left { grid-column: 1; grid-row: 2; border-radius: 4px 0 0 4px; background: #444; color: #fff; font-weight: bold; }
-        .right { grid-column: 3; grid-row: 2; border-radius: 0 4px 4px 0; background: #444; color: #fff; font-weight: bold; }
-        .down { grid-column: 2; grid-row: 3; border-radius: 0 0 4px 4px; opacity: 0.3; }
+        .up, .down { opacity: 0.3; }
+        .left { grid-column: 1; grid-row: 2; border-radius: 4px 0 0 4px; background: #444; color: #fff; }
+        .right { grid-column: 3; grid-row: 2; border-radius: 0 4px 4px 0; background: #444; color: #fff; }
 
-        .action-btns { display: flex; gap: 15px; transform: rotate(-15deg); margin-top: 10px; }
-        .round-btn { width: 50px; height: 50px; background: #8e1e3b; border-radius: 50%; color: rgba(255,255,255,0.2); font-weight: bold; font-size: 12px; }
+        .action-btns { display: flex; gap: 12px; transform: rotate(-15deg); margin-top: 10px; }
+        .round-btn { width: 48px; height: 48px; background: #8e1e3b; border-radius: 50%; color: rgba(255,255,255,0.2); font-weight: bold; }
 
-        .system-btns { display: flex; gap: 20px; margin-top: 40px; transform: rotate(-15deg); }
-        .pill-btn { width: 45px; height: 12px; background: #555; border-radius: 10px; box-shadow: 0 3px #222; }
+        .system-btns { display: flex; gap: 18px; margin-top: 35px; transform: rotate(-15deg); }
+        .pill-btn { width: 40px; height: 10px; background: #555; border-radius: 10px; box-shadow: 0 3px #222; }
 
-        /* 下方訊息輸入介面 */
+        /* 下方操作面板 */
         .messenger-ui {
-            margin-top: 25px; width: 320px;
+            margin-top: 20px; width: 310px;
             background: #2a2a2a; padding: 15px; border-radius: 15px;
-            display: flex; flex-direction: column; gap: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            border: 1px solid #444;
+            display: flex; flex-direction: column; gap: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
-        #msg-input {
-            background: #111; border: 1px solid #555; color: #9bbc0f;
-            padding: 12px; border-radius: 8px; outline: none; font-size: 16px;
-        }
-        #copy-btn {
-            background: #8e1e3b; color: white; border: none;
-            padding: 12px; border-radius: 8px; cursor: pointer;
-            font-weight: bold; font-size: 14px; transition: 0.2s;
-        }
-        #copy-btn:hover { background: #a52345; }
-        #copy-btn:active { transform: scale(0.98); }
+        #msg-input { background: #111; border: 1px solid #444; color: #9bbc0f; padding: 10px; border-radius: 8px; outline: none; }
+        #copy-btn { background: #8e1e3b; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="gba-body">
-    <div style="font-size: 10px; color: #555; font-weight: bold; margin-bottom: 5px;">DOT MATRIX WITH STEREO SOUND</div>
     <div class="screen-bezel">
         <div id="game-screen">
-            <div id="msg-display">你好，白六！</div>
+            <div id="msg-display">白六與你同行</div>
             <div id="sprite-container">
                 <div id="dog-sprite"></div>
             </div>
@@ -124,28 +109,31 @@
     
     <div class="controls">
         <div class="d-pad">
-            <button class="btn up"></button>
+            <button class="btn up" onmousedown="tryPlayMusic()"></button>
             <button class="btn left" ontouchstart="move('L', true)" onmousedown="move('L', true)">◀</button>
             <button class="btn right" ontouchstart="move('R', true)" onmousedown="move('R', true)">▶</button>
-            <button class="btn down"></button>
+            <button class="btn down" onmousedown="tryPlayMusic()"></button>
         </div>
         <div class="action-btns">
-            <button class="btn round-btn" ontouchstart="jump()">A</button>
-            <button class="btn round-btn">B</button>
+            <button class="btn round-btn" ontouchstart="jump()" onmousedown="tryPlayMusic()">A</button>
+            <button class="btn round-btn" onmousedown="tryPlayMusic()">B</button>
         </div>
     </div>
 
     <div class="system-btns">
-        <div style="text-align:center"><div class="pill-btn"></div><div style="font-size:9px; color:#333; font-weight:bold; margin-top:5px">SELECT</div></div>
-        <div style="text-align:center"><div class="pill-btn"></div><div style="font-size:9px; color:#333; font-weight:bold; margin-top:5px">START</div></div>
+        <div style="text-align:center"><div class="pill-btn"></div><div style="font-size:8px; color:#333; font-weight:bold; margin-top:3px">SELECT</div></div>
+        <div style="text-align:center"><div class="pill-btn"></div><div style="font-size:8px; color:#333; font-weight:bold; margin-top:3px">START</div></div>
     </div>
 </div>
 
 <div class="messenger-ui" id="ui-panel">
-    <label style="color: #888; font-size: 12px; font-weight: bold;">訊息內容：</label>
-    <input type="text" id="msg-input" placeholder="在這裡寫下想說的話..." maxlength="30">
+    <input type="text" id="msg-input" placeholder="輸入你想說的話..." maxlength="30">
     <button id="copy-btn" onclick="generateLink()">🚀 產生並複製分享連結</button>
 </div>
+
+<audio id="bg-music" loop>
+    <source src="Morning_sprite_walk.mp3" type="audio/mpeg">
+</audio>
 
 <script>
     const dog = document.getElementById('dog-sprite');
@@ -153,22 +141,32 @@
     const msgDisplay = document.getElementById('msg-display');
     const msgInput = document.getElementById('msg-input');
     const uiPanel = document.getElementById('ui-panel');
+    const bgMusic = document.getElementById('bg-music');
 
     const walkFrames = [[0,0], [1,0], [2,0], [0,1], [1,1]]; 
     const idleFrame = [2,1];
 
     let isMoving = false, walkIdx = 0, animTimer = null;
-    let textPos = 240; 
+    let textPos = 230; 
     let currentDir = 'R';
-    let message = "你好，白六！";
+    let message = "白六與你同行";
+    let musicStarted = false;
 
-    // 初始化：檢查是否有 URL 訊息
+    // 啟動音樂
+    function tryPlayMusic() {
+        if (!musicStarted) {
+            bgMusic.play().catch(e => console.log("等待互動以播放音樂"));
+            musicStarted = true;
+        }
+    }
+
+    // 初始化檢測 URL
     const urlParams = new URLSearchParams(window.location.search);
     const sharedMsg = urlParams.get('msg');
     if (sharedMsg) {
         message = decodeURIComponent(sharedMsg);
         msgDisplay.innerText = message;
-        uiPanel.style.display = "none"; // 收訊者不看介面
+        uiPanel.style.display = "none";
     }
 
     function setFrame(coords) {
@@ -177,25 +175,22 @@
 
     function generateLink() {
         const text = msgInput.value.trim();
-        if (!text) return alert("請輸入訊息");
-        
+        if (!text) return alert("請輸入內容");
+        tryPlayMusic(); // 產生連結時順便啟動音樂
+
         const baseUrl = window.location.origin + window.location.pathname;
         const finalUrl = `${baseUrl}?msg=${encodeURIComponent(text)}`;
+        navigator.clipboard.writeText(finalUrl).then(() => alert("連結已複製！快傳給對方看看。"));
         
-        // 複製到剪貼簿
-        navigator.clipboard.writeText(finalUrl).then(() => {
-            alert("連結已複製！傳送給朋友吧！");
-        });
-        
-        // 更新當前預覽
         message = text;
         msgDisplay.innerText = message;
-        textPos = 240;
+        textPos = 230;
         msgDisplay.style.left = textPos + "px";
     }
 
     function move(dir, pressed) {
         if (!message) return;
+        tryPlayMusic(); // 按下按鍵時啟動音樂
         if (pressed) {
             isMoving = true;
             currentDir = dir;
@@ -207,14 +202,13 @@
                     walkIdx = (walkIdx + 1) % walkFrames.length;
                     setFrame(walkFrames[walkIdx]);
                     
-                    // 雙向推動文字
-                    if (currentDir === 'R') textPos -= 12;
-                    else textPos += 12;
+                    // 雙向位移
+                    if (currentDir === 'R') textPos -= 10;
+                    else textPos += 10;
                     
-                    // 循環處理
                     const textWidth = msgDisplay.offsetWidth;
-                    if (textPos < -textWidth) textPos = 240;
-                    if (textPos > 240) textPos = -textWidth;
+                    if (textPos < -textWidth) textPos = 230;
+                    if (textPos > 230) textPos = -textWidth;
                     
                     msgDisplay.style.left = textPos + "px";
                 }, 100);
@@ -227,6 +221,7 @@
     }
 
     function jump() {
+        tryPlayMusic();
         container.style.transition = "bottom 0.2s ease-out";
         container.style.bottom = "80px";
         setTimeout(() => container.style.bottom = "5px", 200);
