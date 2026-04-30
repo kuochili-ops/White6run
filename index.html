@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>𓃥白六世界時鐘</title>
+    <title>𓃥白六世界時鐘 - 動態修正</title>
     <style>
         :root {
             --gba-color: #8b8b8b;
             --screen-bg: #9bbc0f; 
-            /* ⚠️ 單格精確尺寸 */
             --w: 333px; 
             --h: 350px; 
         }
@@ -36,27 +35,36 @@
             width: 240px; height: 160px;
             background: var(--screen-bg); position: relative;
         }
-        /* 狗狗容器：嚴格限制顯示範圍為單一格 */
+
+        /* 狗狗容器 */
         #sprite-container {
             width: var(--w); height: var(--h);
             position: absolute; left: 50%; bottom: 20px;
             margin-left: calc(var(--w) / -2);
-            /* ⚠️ 縮放狗狗到適合螢幕的大小 */
             transform: scale(0.2); 
             transform-origin: bottom center;
-            overflow: hidden; /* 確保不漏出隔壁動作 */
+            overflow: hidden;
         }
+
+        /* 走路時的身體起伏動畫 */
+        @keyframes walkBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); } /* 模擬後腿蹬地時的身體上升 */
+        }
+        .is-walking {
+            animation: walkBounce 0.24s infinite ease-in-out;
+        }
+
         #dog-sprite {
             width: 100%; height: 100%;
             background-image: url('image_8.png');
             background-repeat: no-repeat;
-            /* ⚠️ 鎖定總圖尺寸，防止自動縮放 */
             background-size: 999px 700px; 
-            /* 預設顯示編號 6 (下右圖) */
-            background-position: -666px -350px; 
+            background-position: -666px -350px; /* 預設編號 6 */
             image-rendering: pixelated;
         }
-        /* 按鈕區 */
+
+        /* 控制器樣式 */
         .controls { width: 100%; display: flex; justify-content: space-between; margin-top: 30px; }
         .d-pad { display: grid; grid-template-columns: repeat(3, 45px); grid-template-rows: repeat(3, 45px); }
         .btn { background: #333; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px #000; }
@@ -97,14 +105,13 @@
     const dog = document.getElementById('dog-sprite');
     const container = document.getElementById('sprite-container');
     
-    // 動作序列位移 (x 索引, y 索引)
-    const walkFrames = [[0,0], [1,0], [2,0], [0,1], [1,1]]; // 1~5
-    const idleFrame = [2,1]; // 6
+    // 幀序列位移 (x, y)
+    const walkFrames = [[0,0], [1,0], [2,0], [0,1], [1,1]]; // 編號 1~5
+    const idleFrame = [2,1]; // 編號 6
 
     let isMoving = false, walkIdx = 0, animTimer = null, facing = 1;
 
     function setFrame(coords) {
-        // 使用精確像素位移
         dog.style.backgroundPosition = `-${coords[0] * 333}px -${coords[1] * 350}px`;
     }
 
@@ -112,23 +119,38 @@
         if (pressed) {
             isMoving = true;
             facing = (dir === 'ArrowLeft') ? -1 : 1;
+            // 套用縮放與方向
             container.style.transform = `scale(0.2) scaleX(${facing})`;
+            // 加上走路晃動類別
+            container.classList.add('is-walking');
+            
             if (!animTimer) {
                 animTimer = setInterval(() => {
                     walkIdx = (walkIdx + 1) % walkFrames.length;
                     setFrame(walkFrames[walkIdx]);
-                }, 120);
+                }, 100); // 稍微加快幀率讓動作更緊湊
             }
         } else {
             isMoving = false;
-            clearInterval(animTimer); animTimer = null;
+            clearInterval(animTimer); 
+            animTimer = null;
+            container.classList.remove('is-walking');
             setFrame(idleFrame);
         }
     }
 
     function jump() {
-        container.style.bottom = "80px";
-        setTimeout(() => container.style.bottom = "20px", 250);
+        // 跳躍時暫時移除走路晃動
+        const wasWalking = container.classList.contains('is-walking');
+        container.classList.remove('is-walking');
+        
+        container.style.transition = "bottom 0.2s cubic-bezier(0.17, 0.67, 0.83, 0.67)";
+        container.style.bottom = "90px";
+        
+        setTimeout(() => {
+            container.style.bottom = "20px";
+            if(wasWalking && isMoving) container.classList.add('is-walking');
+        }, 200);
     }
 
     const stop = () => move('', false);
