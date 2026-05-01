@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>𓃥白六傳情 - 動態節奏版</title>
+    <title>𓃥白六傳情 - 律動優化版</title>
     <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;900&family=Zen+Old+Mincho:wght@700;900&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -33,16 +33,6 @@
             box-shadow: inset 2px 2px 5px rgba(0,0,0,0.2);
         }
         #game-screen { width: 100%; height: 100%; position: relative; overflow: hidden; }
-        #home-overlay {
-            position: absolute; width: 100%; height: 100%;
-            background: var(--screen-bg); z-index: 100;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            padding: 20px; box-sizing: border-box; text-align: center;
-        }
-        #typing-text {
-            font-size: 16px; font-weight: bold; color: var(--pixel-green);
-            min-height: 4em; line-height: 1.5; margin-bottom: 10px;
-        }
         #msg-display {
             position: absolute; white-space: nowrap; font-size: 150px; font-weight: 900;
             color: rgba(15, 56, 15, 0.15); top: 50%; transform: translateY(-50%);
@@ -72,21 +62,13 @@
         .sys-group { text-align: center; cursor: pointer; }
         .pill-btn { width: 45px; height: 12px; background: #555; border-radius: 10px; box-shadow: 0 3px #222; }
         .sys-label { font-size: 9px; font-weight: bold; color: #333; margin-top: 6px; }
-        .messenger-ui { margin-top: 20px; width: 310px; background: #2a2a2a; padding: 15px; border-radius: 15px; display: flex; flex-direction: column; gap: 10px; }
-        #msg-input { background: #111; border: 1px solid #444; color: #9bbc0f; padding: 10px; border-radius: 8px; outline: none; }
-        #copy-btn { background: #8e1e3b; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="gba-body">
     <div class="screen-area">
-        <div id="home-overlay">
-            <div id="typing-text"></div>
-            <div id="start-prompt" style="visibility: hidden; font-size: 12px; font-weight: bold; color: #0f380f; animation: blink 1.2s infinite;">PRESS START</div>
-        </div>
         <div id="game-screen">
-            <div id="mute-icon" style="position: absolute; top:8px; right:8px; display:none; opacity:0.6;">🔇</div>
             <div id="msg-display">白六與你同行</div>
             <div id="sprite-container">
                 <div id="dog-sprite"></div>
@@ -96,54 +78,39 @@
 
     <div class="controls">
         <div class="d-pad">
-            <button class="btn up" onclick="changeFont()">F</button>
+            <button class="btn up">F</button>
             <button class="btn left" ontouchstart="move('L', true)" onmousedown="move('L', true)">◀</button>
             <button class="btn right" ontouchstart="move('R', true)" onmousedown="move('R', true)">▶</button>
-            <button class="btn down" onclick="changeColor()">C</button>
+            <button class="btn down">C</button>
         </div>
         <div class="action-btns">
-            <button class="btn round-btn" onclick="jump()">A</button>
-            <button class="btn round-btn" onclick="toggleMute()">B</button>
+            <button class="btn round-btn">A</button>
+            <button class="btn round-btn">B</button>
         </div>
     </div>
 
     <div class="system-btns">
-        <div class="sys-group" onclick="goHome()">
-            <div class="pill-btn"></div>
-            <div class="sys-label">SELECT</div>
-        </div>
-        <div class="sys-group" onclick="startGame()">
-            <div class="pill-btn"></div>
-            <div class="sys-label">START</div>
-        </div>
+        <div class="sys-group"><div class="pill-btn"></div><div class="sys-label">SELECT</div></div>
+        <div class="sys-group"><div class="pill-btn"></div><div class="sys-label">START</div></div>
     </div>
 </div>
-
-<div class="messenger-ui" id="ui-panel">
-    <input type="text" id="msg-input" placeholder="說點什麼..." maxlength="30">
-    <button id="copy-btn" onclick="generateLink()">🚀 產生並複製連結</button>
-</div>
-
-<audio id="bg-music" loop preload="auto">
-    <source src="https://kuochili-ops.github.io/White6run/morning_sprite_walk.mp3" type="audio/mpeg">
-</audio>
 
 <script>
     const dog = document.getElementById('dog-sprite');
     const container = document.getElementById('sprite-container');
     const msgDisplay = document.getElementById('msg-display');
-    const msgInput = document.getElementById('msg-input');
-    const bgMusic = document.getElementById('bg-music');
-    const homeOverlay = document.getElementById('home-overlay');
-    const typingText = document.getElementById('typing-text');
-    const startPrompt = document.getElementById('start-prompt');
 
-    // 定義每一影格的座標與停留毫秒數 [x_frame, y_frame, duration]
+    // 優化後的行走影格序列：[x_idx, y_idx, duration_ms]
+    // 模擬影片中的步態節奏：跨步(長) -> 縮腿(短) -> 落地(中)
     const walkSequence = [
-        [0, 0, 120], [1, 0, 100], [2, 0, 120], [0, 1, 100], [1, 1, 120]
+        [0, 0, 130], // 第一步跨出
+        [1, 0, 90],  // 過渡
+        [2, 0, 130], // 第二步跨出
+        [0, 1, 90],  // 過渡
+        [1, 1, 130]  // 回到重心位
     ];
-    const idleFrame = [2, 1];
-    const Y_OFFSET = -330;
+    const idleFrame = [2, 1]; // 腳步併攏待機
+    const Y_OFFSET = -335; // 稍微下壓一點，讓腳掌感覺更有重量
 
     let isMoving = false, currentFrameIdx = 0, animTimeout = null, textPos = 270;
     let currentDir = 'R', autoWalkTimer = null;
@@ -151,20 +118,22 @@
     function animate() {
         if (!isMoving) return;
         const frame = walkSequence[currentFrameIdx];
+        
+        // 渲染白六
         dog.style.backgroundPosition = `-${frame[0] * 333}px ${Y_OFFSET}px`;
         
-        // 移動文字
-        textPos += (currentDir === 'R' ? -12 : 12);
+        // 文字位移 (隨影格時長動態調整速度)
+        const moveStep = (frame[2] / 10); 
+        textPos += (currentDir === 'R' ? -moveStep : moveStep);
         if (textPos < -msgDisplay.offsetWidth) textPos = 270;
         if (textPos > 270) textPos = -msgDisplay.offsetWidth;
         msgDisplay.style.left = textPos + "px";
 
         currentFrameIdx = (currentFrameIdx + 1) % walkSequence.length;
-        animTimeout = setTimeout(animate, frame[2]); // 使用該影格指定的延遲
+        animTimeout = setTimeout(animate, frame[2]);
     }
 
     function move(dir, pressed) {
-        if (homeOverlay.style.display !== "none") return;
         if (pressed) {
             clearTimeout(autoWalkTimer);
             if (isMoving && currentDir === dir) return;
@@ -175,7 +144,7 @@
             animate();
         } else {
             stopMovement();
-            resetAutoWalkTimer();
+            startAutoWalkCountdown();
         }
     }
 
@@ -186,30 +155,16 @@
         currentFrameIdx = 0;
     }
 
-    function resetAutoWalkTimer() {
+    function startAutoWalkCountdown() {
         clearTimeout(autoWalkTimer);
-        if (homeOverlay.style.display === "none" && !isMoving) {
-            autoWalkTimer = setTimeout(() => move('R', true), 1000);
-        }
+        autoWalkTimer = setTimeout(() => {
+            if (!isMoving) move('R', true);
+        }, 1000);
     }
 
-    // 初始化與其他功能 (與前版相同)
-    function startGame() { homeOverlay.style.display = "none"; bgMusic.play().catch(()=>{}); resetAutoWalkTimer(); }
-    function goHome() { homeOverlay.style.display = "flex"; bgMusic.pause(); stopMovement(); clearTimeout(autoWalkTimer); typeEffect(); }
-    function jump() { if(homeOverlay.style.display==="none") { resetAutoWalkTimer(); container.style.transition="bottom 0.2s"; container.style.bottom="60px"; setTimeout(()=>container.style.bottom="0px", 200); } }
-    function changeFont() { const f=['sans-serif',"'M PLUS Rounded 1c'", "'Zen Old Mincho'"]; msgDisplay.style.fontFamily=f[Math.floor(Math.random()*f.length)]; resetAutoWalkTimer(); }
-    function changeColor() { const c=['rgba(15,56,15,0.15)','rgba(15,40,80,0.18)','rgba(100,30,30,0.18)']; msgDisplay.style.color=c[Math.floor(Math.random()*c.length)]; resetAutoWalkTimer(); }
+    // 初始自動散步
+    startAutoWalkCountdown();
 
-    function typeEffect() {
-        typingText.innerText = ""; startPrompt.style.visibility = "hidden";
-        const msg = "你好，親友們❤️\n白六今天想跟你分享一段話...";
-        let i = 0; const t = setInterval(() => {
-            typingText.innerText += msg[i]; i++;
-            if (i >= msg.length) { clearInterval(t); startPrompt.style.visibility = "visible"; }
-        }, 80);
-    }
-    
-    typeEffect();
     window.addEventListener('mouseup', () => move('', false));
     window.addEventListener('touchend', () => move('', false));
 </script>
