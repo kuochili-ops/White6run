@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>𓃥白六傳情 - 自動散步版</title>
+    <title>𓃥白六傳情 - 動作修正版</title>
     <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;900&family=Zen+Old+Mincho:wght@700;900&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -33,6 +33,7 @@
             box-shadow: inset 2px 2px 5px rgba(0,0,0,0.2);
         }
         #game-screen { width: 100%; height: 100%; position: relative; overflow: hidden; }
+        
         #home-overlay {
             position: absolute; width: 100%; height: 100%;
             background: var(--screen-bg); z-index: 100;
@@ -43,23 +44,28 @@
             font-size: 16px; font-weight: bold; color: var(--pixel-green);
             min-height: 4em; line-height: 1.5; margin-bottom: 10px;
         }
+
         #msg-display {
             position: absolute; white-space: nowrap; font-size: 150px; font-weight: 900;
-            color: rgba(15, 56, 15, 0.15); 
-            top: 50%; transform: translateY(-50%);
+            color: rgba(15, 56, 15, 0.15); top: 50%; transform: translateY(-50%);
             left: 270px; pointer-events: none; line-height: 1;
             transition: color 0.3s ease, font-family 0.3s ease;
         }
+
+        /* 白六容器 */
         #sprite-container {
-            width: var(--w); height: var(--h); position: absolute; left: 50%; bottom: 5px;
+            width: var(--w); height: var(--h); position: absolute; left: 50%; bottom: 0px;
             margin-left: calc(var(--w) / -2); transform: scale(0.2); transform-origin: bottom center;
             overflow: hidden; z-index: 10;
         }
+        /* 修正後的精靈圖位置：確保腳部貼地 */
         #dog-sprite {
             width: 100%; height: 100%; background-image: url('image_8.png');
             background-repeat: no-repeat; background-size: 999px 700px;
-            background-position: -666px -350px; image-rendering: pixelated;
+            background-position: -666px -330px; /* 待機位置微調 */
+            image-rendering: pixelated;
         }
+
         .controls { width: 100%; display: flex; justify-content: space-between; margin-top: 35px; padding: 0 10px; }
         .d-pad { display: grid; grid-template-columns: repeat(3, 40px); grid-template-rows: repeat(3, 40px); filter: drop-shadow(0 4px 0 #000); }
         .btn { background: #333; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; }
@@ -68,12 +74,15 @@
         .right { grid-column: 3; grid-row: 2; border-radius: 0 6px 6px 0; color: #fff; }
         .down { grid-column: 2; grid-row: 3; border-radius: 0 0 6px 6px; color: #fff; font-size: 10px; }
         .d-pad::after { content: ""; grid-column: 2; grid-row: 2; background: #333; }
+        
         .action-btns { display: flex; gap: 15px; transform: rotate(-15deg); margin-top: 15px; }
         .round-btn { width: 50px; height: 50px; background: #8e1e3b; border-radius: 50%; box-shadow: 0 4px 0 #000; color: rgba(255,255,255,0.4); font-weight: bold; font-size: 14px; }
+        
         .system-btns { display: flex; gap: 20px; margin-top: 45px; transform: rotate(-15deg); }
         .sys-group { text-align: center; cursor: pointer; }
         .pill-btn { width: 45px; height: 12px; background: #555; border-radius: 10px; box-shadow: 0 3px #222; }
         .sys-label { font-size: 9px; font-weight: bold; color: #333; margin-top: 6px; }
+
         .messenger-ui { margin-top: 20px; width: 310px; background: #2a2a2a; padding: 15px; border-radius: 15px; display: flex; flex-direction: column; gap: 10px; }
         #msg-input { background: #111; border: 1px solid #444; color: #9bbc0f; padding: 10px; border-radius: 8px; outline: none; }
         #copy-btn { background: #8e1e3b; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; }
@@ -122,7 +131,7 @@
 </div>
 
 <div class="messenger-ui" id="ui-panel">
-    <input type="text" id="msg-input" placeholder="說點什麼..." maxlength="30">
+    <input type="text" id="msg-input" placeholder="輸入訊息並按回車..." maxlength="30">
     <button id="copy-btn" onclick="generateLink()">🚀 產生並複製連結</button>
 </div>
 
@@ -141,25 +150,24 @@
     const typingText = document.getElementById('typing-text');
     const startPrompt = document.getElementById('start-prompt');
 
+    // 精靈圖影格設定 (修正 Y 軸偏移，確保不懸空)
     const walkFrames = [[0,0], [1,0], [2,0], [0,1], [1,1]]; 
     const idleFrame = [2,1];
-    let isMoving = false, walkIdx = 0, animTimer = null, textPos = 270; 
-    let musicStarted = false, isMuted = false;
+    const Y_OFFSET = -330; // 修正後的 Y 軸位置
 
-    // 自動散步邏輯
-    let autoWalkTimer = null;
-    let isAutoWalking = false;
+    let isMoving = false, walkIdx = 0, animTimer = null, textPos = 270; 
+    let musicStarted = false, isMuted = false, autoWalkTimer = null;
 
     const fonts = ['sans-serif', "'M PLUS Rounded 1c', sans-serif", "'Zen Old Mincho', serif"];
     const colors = ['rgba(15, 56, 15, 0.15)', 'rgba(15, 40, 80, 0.18)', 'rgba(100, 30, 30, 0.18)', 'rgba(30, 80, 30, 0.18)'];
     let fontIdx = 0, colorIdx = 0;
 
     function changeFont() { fontIdx = (fontIdx + 1) % fonts.length; msgDisplay.style.fontFamily = fonts[fontIdx]; resetAutoWalkTimer(); }
-    function changeColor() { colorIdx = (colorIdx + 1) % colors.length; msgDisplay.style.color = colors[colorIdx]; resetAutoWalkTimer(); }
+    function changeColor() { colorIdx = (colorIdx + 0) % colors.length; msgDisplay.style.color = colors[colorIdx]; resetAutoWalkTimer(); }
 
-    const welcomeMsg = "你好，親友們❤️\n白六今天想跟你分享一段話...";
     function typeEffect() {
         typingText.innerText = ""; startPrompt.style.visibility = "hidden";
+        const welcomeMsg = "你好，親友們❤️\n白六今天想跟你分享一段話...";
         let i = 0;
         const timer = setInterval(() => {
             typingText.innerText += welcomeMsg[i]; i++;
@@ -167,8 +175,7 @@
         }, 80);
     }
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const sharedMsg = urlParams.get('msg');
+    const sharedMsg = new URLSearchParams(window.location.search).get('msg');
     if (sharedMsg) { msgDisplay.innerText = decodeURIComponent(sharedMsg); uiPanel.style.display = "none"; }
     typeEffect();
 
@@ -187,7 +194,6 @@
     function toggleMute() {
         isMuted = !isMuted; bgMusic.muted = isMuted;
         document.getElementById('mute-icon').style.display = isMuted ? "block" : "none";
-        if (!isMuted && !musicStarted && homeOverlay.style.display === "none") { bgMusic.play(); musicStarted = true; }
         resetAutoWalkTimer();
     }
 
@@ -202,7 +208,6 @@
         if (homeOverlay.style.display !== "none") return;
         if (pressed) {
             clearTimeout(autoWalkTimer);
-            isAutoWalking = false;
             startMovement(dir);
         } else {
             stopMovement();
@@ -216,7 +221,8 @@
         container.style.transform = `scale(0.2) scaleX(${dir === 'L' ? -1 : 1})`;
         animTimer = setInterval(() => {
             walkIdx = (walkIdx + 1) % walkFrames.length;
-            dog.style.backgroundPosition = `-${walkFrames[walkIdx][0] * 333}px -${walkFrames[walkIdx][1] * 350}px`;
+            // 修正背景偏移量：-影格x * 寬, Y軸固定偏移
+            dog.style.backgroundPosition = `-${walkFrames[walkIdx][0] * 333}px ${Y_OFFSET}px`;
             textPos += (dir === 'R' ? -12 : 12);
             if (textPos < -msgDisplay.offsetWidth) textPos = 270;
             if (textPos > 270) textPos = -msgDisplay.offsetWidth;
@@ -226,18 +232,14 @@
 
     function stopMovement() {
         isMoving = false;
-        clearInterval(animTimer);
-        animTimer = null;
-        dog.style.backgroundPosition = `-${idleFrame[0] * 333}px -${idleFrame[1] * 350}px`;
+        clearInterval(animTimer); animTimer = null;
+        dog.style.backgroundPosition = `-${idleFrame[0] * 333}px ${Y_OFFSET}px`;
     }
 
     function resetAutoWalkTimer() {
         clearTimeout(autoWalkTimer);
         if (homeOverlay.style.display === "none" && !isMoving) {
-            autoWalkTimer = setTimeout(() => {
-                isAutoWalking = true;
-                startMovement('R');
-            }, 1000);
+            autoWalkTimer = setTimeout(() => startMovement('R'), 1000);
         }
     }
 
@@ -245,8 +247,8 @@
         if (homeOverlay.style.display !== "none") return;
         resetAutoWalkTimer();
         container.style.transition = "bottom 0.2s ease-out";
-        container.style.bottom = "80px";
-        setTimeout(() => container.style.bottom = "5px", 200);
+        container.style.bottom = "60px";
+        setTimeout(() => container.style.bottom = "0px", 200);
     }
 
     window.addEventListener('mouseup', () => move('', false));
